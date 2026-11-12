@@ -19,6 +19,7 @@ Read in this order:
 9. [Development and human/AI contribution process](docs/process.md)
 
 For the next step: [proposed first coding milestone](docs/implementation-milestone-1.md) 
+
 The [wireframe sources](docs/wireframes/README.md) preserve the interactive design previews discussed during planning. They use fictional data and are not production frontend code.
 
 ## Working stack
