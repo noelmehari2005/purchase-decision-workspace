@@ -1,0 +1,75 @@
+<div id="import-preview">
+<header><strong>Purchase Decision Workspace</strong><span>Design preview · simulated import</span></header>
+<main>
+<h2>Add a laptop from a link</h2>
+<p>Import a draft, check its configuration, then confirm it for comparison.</p>
+<section id="ir-start">
+<label>Product-page link<input id="ir-url" type="url" value="https://example.com/laptops/model-a" aria-describedby="ir-demo"></label>
+<p id="ir-demo" class="secondary">Fictional example. This preview does not retrieve information from websites.</p>
+<label>Example import outcome<select id="ir-outcome"><option value="complete">Complete draft</option><option value="partial">Partial draft</option><option value="failed">Failed import</option></select></label>
+<button id="ir-import" type="button" class="main-action">Try example import</button>
+<p id="ir-url-error" role="alert"></p>
+</section>
+<section id="ir-review" hidden>
+<div class="status" id="ir-import-status" role="status"></div>
+<div id="ir-fields">
+<div class="heading"><h3>Review candidate draft</h3><span>Not yet in comparisons</span></div>
+<p class="secondary">Blank fields remain unknown. Confirming a draft does not independently verify its specifications.</p>
+<div class="fields">
+<label>Product name<input data-field="name" type="text" required></label>
+<label>Exact configuration or model identifier<input data-field="configuration" type="text" required placeholder="Identify the version you intend to compare"></label>
+<label>Item price (USD)<input data-field="price" type="number" min="0" step="0.01" placeholder="Unknown"></label>
+<label>Estimated tax (USD)<input data-field="tax" type="number" min="0" step="0.01" placeholder="Unknown"></label>
+<label>Shipping (USD)<input data-field="shipping" type="number" min="0" step="0.01" placeholder="Unknown"></label>
+<label>Processor (CPU)<input data-field="cpu" type="text" placeholder="Unknown"></label>
+<label>Memory (RAM, GB)<input data-field="ram" type="number" min="0" placeholder="Unknown"></label>
+<label>Storage (GB)<input data-field="storage" type="number" min="0" placeholder="Unknown"></label>
+<label>Operating system<input data-field="os" type="text" placeholder="Unknown"></label>
+<label>Weight (kg)<input data-field="weight" type="number" min="0" step="0.01" placeholder="Unknown"></label>
+</div>
+<details><summary>Battery information and notes</summary><label>Battery evidence and measurement context<textarea data-field="battery" rows="2" placeholder="Reported duration, source, and test conditions if known"></textarea></label><label>Your notes<textarea data-field="notes" rows="2"></textarea></label></details>
+<div class="source"><span id="ir-source"></span><span>Import date: <span id="ir-date"></span></span><span id="ir-edits"></span></div>
+<div class="status" id="ir-readiness" aria-live="polite"></div>
+<label class="check"><input id="ir-reviewed" type="checkbox">I reviewed this draft and identified the configuration I want to compare.</label>
+<p id="ir-confirm-error" role="alert"></p>
+<div class="actions"><button id="ir-back" type="button">Change link or retry</button><button id="ir-confirm" type="button" class="main-action">Confirm and add to comparison</button></div>
+</div>
+</section>
+<section id="ir-added" hidden aria-live="polite"></section>
+</main>
+</div>
+<style>
+#import-preview{--ip-bg:light-dark(#fff,#202020);--ip-text:light-dark(#252525,#ededed);--ip-muted:light-dark(#595959,#bcbcbc);--ip-line:light-dark(#d5d5d5,#555);--ip-soft:light-dark(#f3f3f3,#2e2e2e);--ip-action:light-dark(#333,#e7e7e7);--ip-on:light-dark(#fff,#222);--ip-error:light-dark(#a12828,#ffb4b4);background:var(--ip-bg);color:var(--ip-text);font:400 15px/1.5 system-ui,sans-serif;border:1px solid var(--ip-line);border-radius:8px;overflow:hidden}
+#import-preview *{box-sizing:border-box}#import-preview header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 100px 16px 22px;background:var(--ip-soft)}#import-preview main{padding:24px}#import-preview h2{font-size:23px;font-weight:500;margin:0}#import-preview h3{font-size:18px;font-weight:500;margin:0}#import-preview strong{font-weight:500}#import-preview p{margin:10px 0 18px}#import-preview label{display:block;margin:12px 0}#import-preview .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}#import-preview input:not([type=checkbox]),#import-preview select,#import-preview textarea{font:inherit;display:block;width:100%;margin-top:5px;padding:9px;background:var(--ip-bg);color:var(--ip-text);border:1px solid var(--ip-line);border-radius:4px}#import-preview button{font:inherit;cursor:pointer;color:var(--ip-text);background:var(--ip-bg);border:1px solid var(--ip-line);border-radius:5px;padding:10px 14px}#import-preview button.main-action{background:var(--ip-action);color:var(--ip-on);border-color:var(--ip-action)}#import-preview .status{padding:14px;background:var(--ip-soft);margin:16px 0}#import-preview .heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:22px}#import-preview .secondary,#import-preview .source,#import-preview header span,#import-preview .heading span{color:var(--ip-muted);font-size:13px}#import-preview .source{display:flex;flex-direction:column;gap:5px;margin:18px 0;overflow-wrap:anywhere}#import-preview .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}#import-preview .check{display:flex;align-items:flex-start;gap:10px}#import-preview input[type=checkbox]{width:19px;height:19px;flex-shrink:0;accent-color:var(--ip-action)}#import-preview [role=alert]{color:var(--ip-error)}#import-preview [hidden]{display:none!important}#import-preview ul{padding-left:20px;margin:8px 0}#import-preview .result{padding:18px 0;border-bottom:1px solid var(--ip-line)}@media(max-width:560px){#import-preview .fields{grid-template-columns:1fr}#import-preview main{padding:16px}#import-preview button{min-height:44px}#import-preview input:not([type=checkbox]),#import-preview select,#import-preview textarea{font-size:16px}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('import-preview');
+const $=selector=>root.querySelector(selector);
+const fields=[...root.querySelectorAll('[data-field]')];
+const numeric=['price','tax','shipping','ram','storage','weight'];
+let data={},original={},mode='complete',importedLink='',importedDate='';
+const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=value=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(value);
+function persist(stage){window.openai?.setWidgetState?.({modelContent:{prototype:'laptop-import-review',stage,outcome:mode,configuration:data.configuration||null},privateContent:{data,original,mode,importedLink,importedDate,stage,reviewed:$('#ir-reviewed').checked,url:$('#ir-url').value}})?.catch(()=>{});}
+function validNumbers(){return numeric.every(k=>data[k]===''||data[k]===undefined||(Number.isFinite(Number(data[k]))&&Number(data[k])>=0));}
+function assessment(){const gaps=[];if(!data.ram)gaps.push('RAM minimum cannot be confirmed.');else if(Number(data.ram)<16)gaps.push('RAM is below Alex’s 16 GB minimum.');if(!data.storage)gaps.push('Storage minimum cannot be confirmed.');else if(Number(data.storage)<512)gaps.push('Storage is below Alex’s 512 GB minimum.');gaps.push('Required-tool compatibility still needs separate verification.');
+const costKnown=['price','tax','shipping'].every(k=>data[k]!==''&&data[k]!==undefined);const total=costKnown?Number(data.price)+Number(data.tax)+Number(data.shipping):null;
+return {gaps,total};}
+function update(){const edits=fields.filter(el=>(data[el.dataset.field]||'')!==(original[el.dataset.field]||'')).length;$('#ir-edits').textContent=`${edits} field${edits===1?'':'s'} edited after import. Original draft retained in this preview.`;const {gaps,total}=assessment();$('#ir-readiness').innerHTML=`<strong>What can be assessed?</strong><ul>${gaps.map(g=>`<li>${escape(g)}</li>`).join('')}</ul><p>${total===null?'Total purchase cost is incomplete. Budget eligibility and purchase timing remain unconfirmed.':`Estimated total: ${money(total)}. ${total>900?'Above Alex’s $900 ceiling.':'Within Alex’s $900 ceiling.'}`}</p>${validNumbers()?'':'<p role="alert">Amounts and measurements must be nonnegative numbers.</p>'}`;}
+function showReview(){ $('#ir-start').hidden=true;$('#ir-review').hidden=false;$('#ir-added').hidden=true;$('#ir-import-status').textContent=mode==='failed'?'Import failed. Enter details manually below; your source link is retained.':mode==='partial'?'Partial draft imported. Missing details are blank; they remain unknown until supplied.':'Example draft imported. Check all details, including the configuration.';fields.forEach(el=>el.value=data[el.dataset.field]??'');$('#ir-source').textContent=`Source: ${importedLink}`;$('#ir-date').textContent=importedDate;update();}
+function importDraft(){let url;try{url=new URL($('#ir-url').value);if(!['https:','http:'].includes(url.protocol))throw Error();}catch{$('#ir-url-error').textContent='Enter a complete http or https product-page link.';return;}
+$('#ir-url-error').textContent='';mode=$('#ir-outcome').value;importedLink=url.href;importedDate=new Date().toLocaleDateString('en-US',{timeZone:'America/Los_Angeles'});
+data=mode==='failed'?{}:{name:'Example Laptop A',configuration:'Model A · 16 GB RAM · 512 GB SSD',price:'740',tax:'60',shipping:'0',cpu:'Example processor — unverified',ram:'16',storage:'512',os:'Example OS — unverified',weight:'1.4',battery:'',notes:''};if(mode==='partial'){data.configuration='';data.ram='';data.tax='';data.shipping='';data.cpu='';}original={...data};$('#ir-reviewed').checked=false;$('#ir-confirm-error').textContent='';showReview();persist('review');}
+function showAdded(){const {total}=assessment();const failed=(data.ram!==''&&data.ram!==undefined&&Number(data.ram)<16)||(data.storage!==''&&data.storage!==undefined&&Number(data.storage)<512)||(total!==null&&total>900);$('#ir-review').hidden=true;$('#ir-start').hidden=true;$('#ir-added').hidden=false;$('#ir-added').innerHTML=`<h3>Candidate added to comparison</h3><p>Review confirmed. Technical suitability is assessed separately.</p><div class="result"><strong>${escape(data.name)}</strong><p>${escape(data.configuration)}</p><p>Group: <strong>${failed?'Doesn’t meet your requirements':'Needs verification'}</strong></p><p>${total===null?'Total cost unknown · no confirmed purchase timeline.':`Estimated total ${money(total)} · ${Math.max(0,Math.ceil((total-300)/150))} monthly contributions at $150, starting with $300 saved.`}</p><p>Required-tool compatibility is unconfirmed.</p></div><div class="source">Source: ${escape(importedLink)}<br>Import date: ${escape(importedDate)}<br>Your corrections and the original imported values are retained in this preview.</div><div class="actions"><button type="button" id="ir-revise">Revise draft</button><button type="button" id="ir-another">Try another example</button></div>`;}
+$('#ir-import').addEventListener('click',importDraft);
+fields.forEach(el=>el.addEventListener('input',()=>{data[el.dataset.field]=el.value;$('#ir-reviewed').checked=false;$('#ir-confirm-error').textContent='';update();persist('review');}));
+$('#ir-reviewed').addEventListener('change',()=>persist('review'));
+$('#ir-back').addEventListener('click',()=>{$('#ir-review').hidden=true;$('#ir-start').hidden=false;persist('start');});
+$('#ir-confirm').addEventListener('click',()=>{if(!data.name?.trim()||!data.configuration?.trim()){$('#ir-confirm-error').textContent='Identify the product and exact configuration before confirming. Specifications may remain unknown.';return;}if(!validNumbers()){$('#ir-confirm-error').textContent='Correct invalid amounts or measurements before confirming.';return;}if(!$('#ir-reviewed').checked){$('#ir-confirm-error').textContent='Review the draft and check the confirmation box first.';return;}showAdded();persist('added');});
+$('#ir-added').addEventListener('click',e=>{if(e.target.id==='ir-revise'){showReview();persist('review');}if(e.target.id==='ir-another'){$('#ir-added').hidden=true;$('#ir-start').hidden=false;persist('start');}});
+function restore(snapshot){if(snapshot?.modelContent?.prototype!=='laptop-import-review'||!snapshot.privateContent)return;const s=snapshot.privateContent;data=s.data||{};original=s.original||{};mode=['complete','partial','failed'].includes(s.mode)?s.mode:'complete';importedLink=s.importedLink||'';importedDate=s.importedDate||'';$('#ir-url').value=s.url||'https://example.com/laptops/model-a';$('#ir-outcome').value=mode;$('#ir-reviewed').checked=!!s.reviewed;if(s.stage==='added')showAdded();else if(s.stage==='review')showReview();else{$('#ir-start').hidden=false;$('#ir-review').hidden=true;$('#ir-added').hidden=true;}}
+restore(window.openai?.widgetState);
+window.addEventListener('openai:set_globals',e=>{if(e.detail?.globals?.widgetState)restore(e.detail.globals.widgetState);});
+})();
+</script>
