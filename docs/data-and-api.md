@@ -1,6 +1,6 @@
 # Data model and API contract draft
 
-Status: review draft, not an implemented API or frozen schema.
+Status: intended v1 contract with an implemented local subset. Evaluation plus decision create/read/list/update and review create/read/list are now implemented; the remaining endpoints below are still planned. See [milestone 2](implementation-milestone-2.md) for exact consistency, bounds, and development-ownership limitations. Candidate edits currently travel in the bounded working-decision state rather than separate candidate endpoints.
 
 ## Record structure
 

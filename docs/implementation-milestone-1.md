@@ -1,4 +1,4 @@
-# First implementation milestone — proposed scope
+# First implementation milestone — authorized local slice
 
 ## Outcome
 
@@ -31,4 +31,4 @@ These remain required parts of the intended v1; sequencing them later does not r
 
 ## Authorization state
 
-Product defaults are approved. This file makes initial coding scope reviewable; application scaffolding and code changes have not yet been authorized or performed.
+Product defaults are approved. On November 12, 2026, the user authorized this first coding milestone after committing the provider clarification. The manual local slice is implemented; see [actual verification and limitations](implementation-evidence.md) and [run instructions](development.md). No additional milestone, deployment, or push is implied.
