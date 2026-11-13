@@ -18,7 +18,7 @@ Read in this order:
 8. [Research evidence and unresolved issues](docs/research-and-open-questions.md)
 9. [Development and human/AI contribution process](docs/process.md)
 
-For the next step: [proposed first coding milestone](docs/implementation-milestone-1.md) and [draft Icecat clarification email](docs/icecat-clarification-draft.md).
+For the next step: [proposed first coding milestone](docs/implementation-milestone-1.md) 
 
 The [wireframe sources](docs/wireframes/README.md) preserve the interactive design previews discussed during planning. They use fictional data and are not production frontend code.
 
