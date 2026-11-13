@@ -12,7 +12,8 @@ const address = (id:string) => {
   url.searchParams.set('decision',id)
   window.history.replaceState(null,'',url)
 }
-export function WorkspaceStorage({state,onLoad,onReady,onTitle,onTimezone}: {
+export function WorkspaceStorage({state,onLoad,onReady,onTitle,onTimezone,accountMode}: {
+  accountMode:'local'|'auth0';
   state:WorkspaceState; onLoad:(state:WorkspaceState)=>void; onReady:()=>void;
   onTitle:(title:string)=>void; onTimezone:(timezone:string)=>void;
 }) {
@@ -111,7 +112,7 @@ export function WorkspaceStorage({state,onLoad,onReady,onTitle,onTimezone}: {
   return <section className="surface workspace-storage" aria-label="Saved workspace">
     <h2>Your saved workspace</h2>
     <fieldset className="storage-controls" disabled={initializing}>
-    <p className="hint">Local single-user storage · no account protection yet. Use fictional data. Save changes explicitly; unsaved edits are lost on reload.</p>
+    <p className="hint">{accountMode==='local'?'Local single-user demonstration. Use fictional data.':'Saved workspaces belong to your signed-in account.'} Save changes explicitly; unsaved edits are lost on reload or sign-out.</p>
     <div className="field-grid"><TextField label="Workspace title" value={state.title} onChange={onTitle}/>
       <TextField label="Calendar timezone" value={state.timezone} onChange={onTimezone} hint="IANA name, for example America/Los_Angeles. Contribution dates are local calendar dates."/></div>
     <div className="button-row"><button className="primary" type="button" disabled={busy || !dirty} onClick={()=>void run(async()=>{await save()})}>{busy?'Working…':saved?'Save changes':'Save workspace'}</button>

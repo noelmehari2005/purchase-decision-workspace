@@ -4,6 +4,7 @@ from .workspaces import StorageError, now, ensure_candidate_revisions
 
 class MongoRepository:
     def __init__(self, database):
+        self.database = database
         self.decisions = database.decisions
         self.snapshots = database.snapshots
         self.decisions.create_index([('owner_id', 1), ('updated_at', -1)])

@@ -1,4 +1,12 @@
-"""Local evaluation API with opt-in development persistence. No accounts or live imports."""
+"""Local laptop decision API with Auth0 accounts and opt-in persistence. No live imports."""
+
+from pathlib import Path
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    pass  # Dependency setup can complete while the account-free demo keeps running.
+else:
+    load_dotenv(Path(__file__).resolve().parents[1] / '.env', override=False)
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -8,9 +16,11 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from .domain import Requirements, evaluate
 from .schemas import EvaluationInput, EvaluationOutput
 
-app = FastAPI(title='Purchase Decision Workspace', version='0.2.0')
+app = FastAPI(title='Purchase Decision Workspace', version='0.3.0')
 from .storage_api import install_storage
 install_storage(app)
+from .auth_api import install_auth
+install_auth(app)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', 'testserver'])
 
 

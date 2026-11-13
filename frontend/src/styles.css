@@ -7,3 +7,5 @@
 .workspace-storage>h2{font-size:18px}.workspace-storage>.button-row{align-items:center}.historical-review{border-top:2px solid var(--green);padding-top:22px;margin-top:22px}.historical-review p,.historical-review li{overflow-wrap:anywhere}.preserve-lines{white-space:pre-wrap}
 
 .storage-controls{border:0;padding:0;margin:0;min-width:0}.storage-controls>.button-row{align-items:center}
+
+.account-panel{background:#fff;padding:18px 4%;border-bottom:1px solid var(--line)}.account-panel>.section-heading{max-width:1440px;margin:auto}.account-panel .button-row{margin:0}.account-panel p{margin-bottom:0}.account-panel>.notice,.account-panel>.error,.account-panel>details{max-width:1100px;margin:14px auto}.account-link{display:inline-flex;align-items:center;min-height:44px;padding:9px 15px;border:1px solid var(--line);border-radius:7px;text-decoration:none;font-size:14px;font-weight:600}.account-link[aria-disabled=true]{opacity:.5;pointer-events:none}.account-panel form{max-width:420px}

@@ -61,6 +61,8 @@ class MemoryRepository:
 
 class StorageBehavior:
     def setUp(self):
+        self.auth_env=patch.dict(os.environ,{'PDW_AUTH_MODE':'local','PDW_LOCAL_STORAGE':'1'})
+        self.auth_env.start()
         self.repo = self.make_repository()
         app.dependency_overrides[repository] = lambda:self.repo
         self.client=TestClient(app)
@@ -69,6 +71,7 @@ class StorageBehavior:
         app.dependency_overrides.clear()
         self.client.close()
         self.cleanup()
+        self.auth_env.stop()
     def cleanup(self):
         pass
     def create(self):

@@ -14,11 +14,11 @@ const initialPlan: PlanForm = {savings: '300', contribution: '150', firstDate: '
   essential: false, useBudget: false, income: '1600', housing: '700', food: '250', transportation: '180',
   other: '120', goals: '150', buffer: '50', useScenario: false, category: 'transportation', reduction: '40', allocation: '40'}
 
-function App() {
+function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;accountMode?:'local'|'auth0'}) {
   const [step, setStep] = useState(0)
   const [title, setTitle] = useState('Alex’s laptop decision')
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles')
-  const [restoring,setRestoring] = useState(new URLSearchParams(window.location.search).has('decision'))
+  const [restoring,setRestoring] = useState(storageAllowed && new URLSearchParams(window.location.search).has('decision'))
   const titleRef = useRef<HTMLHeadingElement>(null)
   const [tasks, setTasks] = useState(taskLabels.map((name, i) => ({name, selected: i < 4,
     timing: i === 3 ? 'upcoming' : 'current', experience: i === 2 ? 'struggles' : i === 3 ? 'unknown' : 'adequate'})))
@@ -140,9 +140,10 @@ function App() {
           'Add exact configurations. Review each laptop before comparing.', 'Separate suitability, tradeoffs, and purchase timing.',
           'Capture your reasoning, including what remains uncertain.',
         ][step]}</p></div>
-      <div className="prototype-note">Alex’s fictional example is prefilled. Local saved workspaces are available when MongoDB is connected. Accounts are not connected yet. Unsaved changes are lost on reload.</div>
+      <div className="prototype-note">Alex’s fictional example is prefilled. Review the example and change it to explore your needs. Saving is always explicit. Unsaved changes are lost on reload or sign-out.</div>
 
-      <WorkspaceStorage state={workspace} onLoad={loadWorkspace} onReady={storageReady} onTitle={setTitle} onTimezone={setTimezone}/>
+      {storageAllowed && <WorkspaceStorage accountMode={accountMode} state={workspace} onLoad={loadWorkspace} onReady={storageReady} onTitle={setTitle} onTimezone={setTimezone}/> }
+      {!storageAllowed && <p className="notice">Fictional demo · changes stay in this tab. Sign in with a verified email to save a private workspace.</p>}
       {restoring && <p role="status" className="notice">Restoring your saved workspace…</p>}
       <div inert={restoring}>
       {step === 0 && <>

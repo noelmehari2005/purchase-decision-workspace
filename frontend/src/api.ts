@@ -14,6 +14,9 @@ export async function requestEvaluation(payload: unknown, signal: AbortSignal): 
   return body as Evaluation
 }
 
+let sessionCsrf:string|null=null
+export function setSessionContext(csrf:string|null) {sessionCsrf=csrf}
+
 export class StorageRequestError extends Error {
   code: string
   constructor(message: string, code: string) {super(message); this.code = code}
@@ -23,12 +26,17 @@ export async function storageRequest<T>(path: string, method = 'GET', payload?: 
   const timeout = setTimeout(() => controller.abort(), 12_000)
   try {
     const response = await fetch(`/api/v1${path}`, {method, signal:controller.signal,
-      headers: payload ? {'Content-Type':'application/json'} : undefined,
+      headers: {...(payload ? {'Content-Type':'application/json'} : {}),
+        ...(method!=='GET' && sessionCsrf ? {'X-PDW-CSRF':sessionCsrf} : {})},
       body: payload ? JSON.stringify(payload) : undefined})
     if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Check that the local backend is running.')
     const data = await response.json()
-    if (!response.ok) throw new StorageRequestError(data.field_errors?.length ?
+    if (!response.ok) {
+      if (response.status===401 || data.code==='email_unverified' || data.code==='account_restricted')
+        window.dispatchEvent(new Event('pdw-auth-required'))
+      throw new StorageRequestError(data.field_errors?.length ?
       data.field_errors.map((e: {path:string;message:string})=>`${e.path}: ${e.message}`).join(' ') : data.message || 'Storage request failed.', data.code)
+    }
     return data as T
   } catch (error) {
     if (controller.signal.aborted) throw new Error('Storage timed out. Your current tab remains unchanged; retry to check the saved record.')

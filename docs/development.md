@@ -2,9 +2,9 @@
 
 ## What runs today
 
-The React/TypeScript manual decision workspace uses Python/FastAPI evaluation and optional MongoDB persistence. You can explicitly save/open workspaces and retain read-only historical reviews. Unsaved changes are lost on reload. Accounts, live imports, JSON export, and deployment are not implemented. Use fictional inputs: saved data belongs to a single local development owner without account protection. Product source links are references only.
+The React/TypeScript manual decision workspace uses Python/FastAPI evaluation and optional MongoDB persistence. You can explicitly save/open workspaces and retain read-only historical reviews. Unsaved changes are lost on reload. Auth0 email/password accounts and the core private save/sign-out/re-login journey are implemented and verified locally; use the [account setup guide](auth0-setup.md) for configuration and broader verification. Live imports, JSON export, and deployment remain unfinished. Use fictional data until the full account milestone is verified. Product source links are references only.
 
-Docker Desktop is needed for the provided MongoDB setup. No Icecat or identity-provider credentials are needed. You can leave storage disabled and use only the manual evaluator without Docker.
+Docker Desktop is needed for the provided MongoDB setup. Icecat credentials are not needed. Auth0 credentials are needed only for private account mode. You can leave storage disabled and use only the manual evaluator without Docker.
 
 ## Setup
 
@@ -20,7 +20,7 @@ cd frontend
 npm ci
 ```
 
-The Python lock records the versions actually tested; `backend/requirements.txt` records direct dependency ranges. The npm lock records frontend dependency versions. Refresh locks intentionally and rerun checks when updating dependencies. Do not commit virtual environments, node_modules, credentials, or environment files.
+The Python lock records the installed and tested dependency versions, including Authlib and python-dotenv. `backend/requirements.txt` records direct dependency ranges. The npm lock records frontend dependency versions. Refresh locks intentionally and rerun checks when updating dependencies. Do not commit virtual environments, node_modules, credentials, or environment files.
 
 ## Start the app
 
@@ -30,11 +30,11 @@ Start MongoDB once from the repository root, with Docker Desktop open:
 docker compose up -d mongodb
 ```
 
-Keep the backend running in one terminal:
+For the previous single-user demonstration without Auth0, keep the backend running in one terminal using the explicit local mode below. For private accounts, follow the Auth0 setup guide and use `PDW_AUTH_MODE=auth0` in the ignored backend configuration instead:
 
 ```sh
 cd /Users/noelmehari/Documents/Portfolio/purchase-decision-workspace
-PDW_LOCAL_STORAGE=1 .venv/bin/python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+PDW_AUTH_MODE=local PDW_LOCAL_STORAGE=1 .venv/bin/python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 Keep the frontend running in a second terminal:
@@ -103,4 +103,14 @@ The installed Starlette emits a TestClient/httpx deprecation warning. Tests curr
 - `frontend/src/components.tsx`: candidate review and plan display.
 - `frontend/src/App.tsx`: the five-step in-memory journey and stale-result/review handling.
 
-Change rules behind these boundaries and increment model versions when behavior changes. Later milestones can add persistence and import adapters without moving financial arithmetic into components. Evaluation requests contain selected calculation inputs; explicit workspace saves additionally send the bounded full working state, including drafts, notes, and source references, to the local database. No credentials are embedded. Storage is disabled unless `PDW_LOCAL_STORAGE=1`; optional backend settings are `PDW_MONGO_URI` (default `mongodb://127.0.0.1:27017`) and `PDW_MONGO_DATABASE` (default `purchase_decision_workspace`). Do not point this local development setup at a shared or production database.
+Change rules behind these boundaries and increment model versions when behavior changes. Later milestones can add persistence and import adapters without moving financial arithmetic into components. Evaluation requests contain selected calculation inputs; explicit workspace saves additionally send the bounded full working state, including drafts, notes, and source references, to the local database. No credentials are embedded. Account mode loads the ignored `backend/.env`; never commit that file or share its values in chat. Storage is disabled unless `PDW_LOCAL_STORAGE=1`; optional backend settings are `PDW_MONGO_URI` (default `mongodb://127.0.0.1:27017`) and `PDW_MONGO_DATABASE` (default `purchase_decision_workspace`). Do not point this local development setup at a shared or production database.
+
+## Account verification checks
+
+After installing the current backend requirements, run all local checks as above. The signed OIDC fixture tests use Authlib and mock only provider HTTP responses; no account credentials are needed for them. To run real MongoDB ownership/session checks in fresh test databases:
+
+```sh
+PDW_TEST_MONGO_URI=mongodb://127.0.0.1:27017 .venv/bin/python -m unittest backend.tests.test_storage.MongoStorageTests backend.tests.test_auth_mongo.MongoAccountTests -v
+```
+
+Live provider signup, verification, and password reset require the account holder and are recorded separately from automated fixtures.

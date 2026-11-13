@@ -2,7 +2,7 @@
 
 A purchase decision and planning application, beginning with laptops for programming. Help users assess their current laptop, compare replacements against their needs, and explore a purchase plan they control.
 
-**Status: local implementation, milestones 1–2.** React/TypeScript and Python/FastAPI support the fictional/manual laptop journey, comparison, and savings plans. MongoDB now stores working decisions and immutable historical reviews. Accounts, live imports, export, and deployment remain pending; version 1 is still in progress.
+**Status: local implementation, milestones 1–3.** React/TypeScript and Python/FastAPI support the fictional/manual laptop journey, comparison, and savings plans. MongoDB now stores working decisions and immutable historical reviews. Auth0 email/password accounts, verified owner access, session handling, and the local save/sign-out/re-login journey are now verified; see the [account setup guide](docs/auth0-setup.md) and [milestone 3 evidence](docs/implementation-milestone-3.md). Live imports, export, and deployment remain pending; version 1 is still in progress.
 
 Start with the [local development guide](docs/development.md), then review [milestone 1 evidence](docs/implementation-evidence.md) and [saved-workspace evidence and limitations](docs/implementation-milestone-2.md).
 
@@ -33,7 +33,7 @@ The [wireframe sources](docs/wireframes/README.md) preserve the interactive desi
 - Email-and-password authentication through an established provider; Auth0 is the recommended integration direction, pending configuration and plan checks.
 - Open Icecat for API-first specification imports, with manual completion for missing or unavailable information.
 
-MongoDB persistence is opt-in and local, using one development owner; it is not an authenticated private workspace yet. Docker Compose supplies the local database. The manual evaluator can still run without it. Dependency locks and automated tests are included. No cloud infrastructure has been provisioned or code deployed.
+MongoDB persistence is local and uses server-derived account ownership in Auth0 mode. An explicit legacy local mode retains the earlier fictional development records separately; it never becomes a fallback on authentication failure. Docker Compose supplies the local database. The manual evaluator can still run without it. Dependency locks and automated tests are included. No cloud infrastructure has been provisioned or code deployed.
 
 ## Provider clarification and remaining work
 

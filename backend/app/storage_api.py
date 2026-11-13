@@ -1,6 +1,6 @@
-"""Explicitly enabled, loopback-only single-user development persistence.
+"""Loopback development persistence with Auth0-derived ownership.
 
-Replace local_owner with verified server-side identity before any public deployment.
+The explicit local demonstration mode remains separate from private accounts.
 """
 import os
 from functools import lru_cache
@@ -20,9 +20,12 @@ LOCAL_OWNER = 'local-development-user'
 def configured_repository():
     from pymongo import MongoClient
     client = MongoClient(os.environ.get('PDW_MONGO_URI', 'mongodb://127.0.0.1:27017'),
-                         serverSelectionTimeoutMS=2000, connectTimeoutMS=2000, socketTimeoutMS=5000)
+                         serverSelectionTimeoutMS=2000, connectTimeoutMS=2000, socketTimeoutMS=5000, tz_aware=True)
     database = client[os.environ.get('PDW_MONGO_DATABASE', 'purchase_decision_workspace')]
-    return MongoRepository(database)
+    try:return MongoRepository(database)
+    except Exception:
+        client.close()
+        raise
 
 
 def repository():
@@ -36,13 +39,8 @@ def repository():
 
 
 def local_owner(request: Request):
-    if request.client and request.client.host not in ('127.0.0.1', '::1', 'testclient'):
-        raise StorageError(403, 'local_only', 'Saved workspaces currently support local development only.')
-    origin = request.headers.get('origin')
-    if origin and origin not in ('http://127.0.0.1:5173', 'http://localhost:5173',
-                                 'http://127.0.0.1:8000', 'http://localhost:8000'):
-        raise StorageError(403, 'invalid_origin', 'This origin cannot access local saved workspaces.')
-    return LOCAL_OWNER
+    from .auth_api import current_owner
+    return current_owner(request)
 
 
 def safe_operation(action):
@@ -57,7 +55,8 @@ def safe_operation(action):
 @router.get('/storage')
 def storage_status(owner=Depends(local_owner), repo=Depends(repository)):
     safe_operation(lambda: repo.list(owner, 0, 1))
-    return {'mode': 'local-single-user', 'schema_version': 1}
+    from .auth_provider import auth_mode
+    return {'mode': 'local-single-user' if auth_mode()=='local' else 'authenticated', 'schema_version': 1}
 
 
 @router.get('/decisions')

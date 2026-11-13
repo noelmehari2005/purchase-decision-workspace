@@ -2,7 +2,7 @@
 
 ## Current phase
 
-First local implementation milestone, authorized November 12, 2026. React/TypeScript and Python/FastAPI now support the fictional/manual journey. Automated checks and browser observations are recorded in [implementation evidence](implementation-evidence.md). The HTML fragments preserve earlier design previews. Milestone 2 adds local MongoDB saved workspaces and immutable reviews; see [its evidence](implementation-milestone-2.md). No deployment, accounts, or live import integration exists yet.
+First local implementation milestone, authorized November 12, 2026. React/TypeScript and Python/FastAPI now support the fictional/manual journey. Automated checks and browser observations are recorded in [implementation evidence](implementation-evidence.md). The HTML fragments preserve earlier design previews. Milestone 2 adds local MongoDB saved workspaces and immutable reviews; see [its evidence](implementation-milestone-2.md). Milestone 3 now implements account boundaries and has passed local automated and core live Auth0 verification; see [its evidence and limits](implementation-milestone-3.md). No deployment or live import integration exists yet.
 
 ## Human and AI contributions
 
