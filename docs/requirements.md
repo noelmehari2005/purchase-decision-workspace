@@ -22,7 +22,7 @@ Accepted product behavior is summarized here. Contracts that implement it remain
 | R16 | Saved decisions | Tentative/undecided outcomes permitted, including failed/unconfirmed candidates with issues retained. Save explicit immutable snapshots and revisable working drafts. |
 | R17 | Private accounts | Email/password, optional financial inputs, owner-only access, account-free fictional demo. Provider implementation must not mix budgets into identity profiles. |
 | R18 | Account deletion | 30-day pending-deletion recovery window and notification email. Restore requires explicit cancellation. Then purge active associated records; backup copies removed within the following 30 days, subject to verified infrastructure support. |
-| R19 | Stable historical meaning | Retain input/result/model version identity. Re-evaluation under newer rules creates a new result. Product-content retention remains subject to the unresolved license decision. |
+| R19 | Stable historical meaning | Retain input/result/model version identity. Re-evaluation under newer rules creates a new result. The November 12 provider clarification permits the described Open Icecat historical storage; preserve attribution and dated provenance. |
 | R20 | Extensibility | Separate imports, domain calculations, assessment, storage, and interface. New sources produce the same draft contract. Category expansion is not implemented speculatively. |
 
 ## Nonfunctional requirements

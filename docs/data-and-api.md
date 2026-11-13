@@ -13,7 +13,7 @@ All owned records have an opaque ID, owner ID, creation/update timestamps, schem
 | Candidate | Product identity, separate seller offer, confirmed revision, optional pending draft revision. Frozen revisions referenced by snapshots cannot be silently overwritten. |
 | Import draft | Source input, resolved identity, source result, mapped specs, originals, reviewed edits, missing fields, conflicts, draft revision, optional refresh target. |
 | Evaluation | Consistent decision/candidate revision set, per-requirement results, preference tradeoffs, plan results, assumptions/warnings, calculation/assessment/guidance versions. Working evaluations need not all become permanent history. |
-| Snapshot | Explicitly saved inputs and results, candidate revision identity, reasoning and unresolved issues, versions, creation date. Storage of imported content is conditional on source-retention resolution. |
+| Snapshot | Explicitly saved inputs and results, candidate revision identity, reasoning and unresolved issues, versions, creation date. The November 12 provider clarification permits the described Open Icecat historical specification storage; retain attribution and dated provenance. |
 | Application session | User reference, expiry, revocation state. Session secrets are never returned in normal record APIs or logged. |
 
 Embed small related arrays such as expenses and preferences. Reference growing candidates and snapshots rather than accumulating unlimited history inside one MongoDB document. Detailed collections/indexes and maximum record sizes need final specification.
@@ -70,7 +70,7 @@ API prefix proposed: `/api/v1`. Versioning this URL is distinct from versioning 
 | `GET /decisions/{id}/snapshots/{snapshotId}` | Retrieve owned historical snapshot. |
 | `POST /account/deletion-request` | After fresh authentication, enter pending deletion; record deadline and notification status. |
 | `POST /account/restore` | Cancel pending deletion explicitly before deadline. |
-| `GET /account/export` | JSON export of user-owned inputs, decisions, plans, and reasoning; licensed product-content inclusion remains unresolved. |
+| `GET /account/export` | JSON export of user-owned inputs, decisions, plans, reasoning, and permitted Open Icecat specifications with attribution/provenance. |
 
 Identity-provider callbacks, logout/reset flows, session endpoints, and verification handling need a final provider-specific contract. Pending-deletion sessions can access restoration/lifecycle operations only, not ordinary workspaces.
 

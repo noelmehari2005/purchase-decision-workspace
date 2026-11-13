@@ -25,7 +25,7 @@ Demonstrate one fictional/manual laptop decision end to end locally: needs and c
 
 ## Deferred to subsequent milestones
 
-MongoDB persistence and immutable snapshots; authenticated private workspace and full account lifecycle; live Icecat storage/import integration after data-use resolution; additional brand coverage; documented automated tool checks; deployment/hosting/backup operations.
+MongoDB persistence and immutable snapshots; authenticated private workspace and full account lifecycle; live Icecat storage/import integration; additional brand coverage; documented automated tool checks; deployment/hosting/backup operations. The user-supplied November 12 provider clarification resolves the core storage/correction/export permission questions; live imports remain later in the sequence to keep the first milestone focused, not because that clarification denies access.
 
 These remain required parts of the intended v1; sequencing them later does not remove them from scope. No paid provider, AWS provisioning, Git commit/push, or external publication is included in this milestone.
 

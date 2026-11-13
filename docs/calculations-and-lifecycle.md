@@ -59,7 +59,7 @@ Email/password is accepted; no social login in v1. Auth0 is recommended but not 
 | Provider-managed password reset, neutral request response, explicit application-session invalidation | Accepted behavior; provider integration still to verify |
 | One-hour inactivity and 24-hour absolute session lifetime | Accepted initial settings |
 | Sign-out removes displayed private state but not saved records | Accepted |
-| JSON export of user-owned inputs, decisions, plans, and reasoning | Accepted format; inclusion of licensed product content unresolved |
+| JSON export of user-owned inputs, decisions, plans, and reasoning | Accepted format; November 12 provider clarification also permits the described specification export |
 | 30-day deletion recovery period, notification, explicit restoration | Accepted |
 | Backup copies removed no later than 30 days after official active deletion | Accepted policy target; hosting/process verification pending |
 | No automatic account deletion for inactivity | Accepted |
@@ -91,4 +91,4 @@ Keep a minimal protected deletion record (opaque identity and deletion state/dea
 
 ## Versioning
 
-Store schema, calculation, guidance, and assessment versions separately. Saved snapshots retain original outputs; new evaluations identify the version used. A compatibility/migration policy is needed when schema changes. License-dependent product retention may limit what historical source evidence can be copied into snapshots; do not claim this is resolved.
+Store schema, calculation, guidance, and assessment versions separately. Saved snapshots retain original outputs; new evaluations identify the version used. A compatibility/migration policy is needed when schema changes. The user-supplied November 12 provider reply permits the described Open Icecat historical specification storage and JSON export. Preserve attribution, source identity, and retrieval dates; do not extend this finding to unrelated assets or sources.

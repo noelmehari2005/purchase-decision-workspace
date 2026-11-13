@@ -15,7 +15,7 @@ Consolidated from planning through November 11, 2026. Dates are approximate conv
 | D07 | Accepted | Optional maximum price, independent lower-cost preference, visible product tradeoffs and timing. Costlier is not automatically better. |
 | D08 | Accepted | Optional income/expense budget, contribution support, user chooses actual amount. One user-directed spending alternative preserves original. |
 | D09 | Accepted | Import draft → review/correct → confirm → compare. Missing data permitted. Confirmation isn't independent verification. |
-| D10 | Accepted | Open Icecat planned source; API-first, manual completion/failure fallback, no page parser in v1. Read-only samples succeeded. Source-retention issues remain unresolved. |
+| D10 | Accepted | Open Icecat planned source; API-first, manual completion/failure fallback, no page parser in v1. Read-only samples succeeded. November 12 provider reply supplied by user permits the described retained-data/export uses; see D21. |
 | D11 | Accepted | Icecat product links and exact brand/part-code lookup. Arbitrary retailer link resolution deferred; seller links retained. |
 | D12 | Accepted | React/TypeScript + FastAPI/Python + MongoDB modular architecture. Docker eventual packaging, AWS eventual hosting direction. No speculative microservices. |
 | D13 | Accepted | Email/password only; no Google sign-in in v1. Auth0 remains recommended provider direction, unconfigured. |
@@ -26,6 +26,7 @@ Consolidated from planning through November 11, 2026. Dates are approximate conv
 | D18 | Accepted | Monthly anchor with last-day fallback and return to original day; incomplete-budget handling; explicit provisional-total selection; no-requirements explanation; JSON export; confirmed whole-decision deletion without the account's recovery period. Licensed export content remains open. |
 | D19 | Proposed technical detail | Detailed endpoints/schema, exact purge execution, deletion-record retention, concurrency and retry mechanisms need implementation-level specification/verification. Product approval is not a claim those mechanisms exist. |
 | D20 | Research update | User supplied an Icecat reply describing a paid Full Icecat quote/coverage process. No paid subscription requested by this project; the message does not clarify free Open Icecat historical-data/export terms. |
+| D21 | Provider clarification supplied by user, November 12 | Follow-up permits private/historical specification storage, normalization/corrections with attribution, JSON export, and server storage for Open Icecat. API-first/manual fallback stays unchanged; this email does not deny specification access or require a paid upgrade. No authorization to begin application coding follows from this update alone. |
 
 ## Alternatives deliberately deferred
 

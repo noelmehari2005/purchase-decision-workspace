@@ -34,5 +34,5 @@ Git commits support history but do not replace this evidence. A concise portfoli
 
 - Product decisions already accepted remain accepted unless explicitly revised.
 - The six product defaults, including date/session conventions, are now approved. Technical contracts and operating guarantees still require specification/verification; do not request the same product approval again.
-- Open-source/product-content licenses and source-retention design must be reconciled before relying on stored imported content.
+- Implement Open Icecat attribution/provenance and the November 12 provider clarification for the described storage/export uses. Re-evaluate permissions for new sources or uses.
 - Keep hosting costs, credentials, migrations, and publishing reviewable before executing consequential external actions.

@@ -35,6 +35,6 @@ No application has been scaffolded, dependencies installed, infrastructure provi
 
 ## Review before implementation
 
-Start with the open-issues table in [research and unresolved issues](docs/research-and-open-questions.md). In particular, historical retention/export of licensed product content remains unresolved despite successful read-only API samples. Scope acceptance does not establish source permission, professional financial validation, or production readiness.
+Start with the open-issues table in [research and unresolved issues](docs/research-and-open-questions.md). On November 12, the user supplied an Icecat reply permitting private/historical storage, normalization/corrections, and JSON export of Open Icecat content. This resolves the principal data-use questions for those described uses; attribution, provenance, freshness labeling, and coverage checks remain implementation requirements. No professional financial validation or production readiness is claimed.
 
 Baseline consolidated: November 11, 2026. New detailed contracts are proposals until reviewed; older accepted decisions retain their recorded status.

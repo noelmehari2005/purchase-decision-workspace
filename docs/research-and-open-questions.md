@@ -1,6 +1,6 @@
 # Research evidence and unresolved issues
 
-Historical research ledger, consolidated November 11, 2026. Linked guidance and terms can change. Recheck before relying on them for implementation or public promises. Observations are not professional legal/financial validation.
+Historical research ledger, consolidated November 11, 2026; updated with user-supplied correspondence November 12. Linked guidance and terms can change. Recheck before relying on them for implementation or public promises. Observations are not professional legal/financial validation.
 
 ## Open Icecat read-only feasibility observations
 
@@ -48,12 +48,12 @@ No claim is made that API access resolves content-retention permission, that cor
 
 | ID | Remaining issue | Needed resolution before |
 | --- | --- | --- |
-| O01 | Icecat historic snapshots, redistribution/export, modifications, freshness, attribution, source removal | Final retained-evidence/export design and importing real content into persistent app storage |
+| O01 | Resolved for described uses by user-supplied provider reply November 12: private/historical storage, normalization/corrections, JSON export, and server storage permitted. Preserve attribution/provenance and distinguish historical from current facts. No broad claim about every asset, revocation scenario, or catalog coverage. | Implement the confirmed uses; preserve the correspondence as supporting evidence |
 | O02 | Broader source coverage and unsupported/restricted products | Advertising specific supported coverage; test additional brands and configurations |
 | O03 | Exact assessment rule set for VS Code/Docker across supported OS/versions | Implementing automated tool checks; retain unknown otherwise |
 | O04 | Product defaults resolved: original monthly anchor/last-day fallback, incomplete budgets, explicit provisional-total choice, empty-requirement explanation. Boundary tests still required. | Calculation/assessment implementation |
 | O05 | Verification gate/session settings accepted. Provider final configuration, password-reset integration, and email delivery remain to verify. | Account implementation and public registration |
-| O06 | JSON format and individual item deletion accepted. Licensed export content, precise retention execution remain open. | Final privacy flows/contracts |
+| O06 | JSON format and individual item deletion accepted. Provider reply permits specification export. Precise user-data retention execution remains to specify. | Final privacy flows/contracts |
 | O07 | Hosting budget/services, backups, purge jobs, provider deletion, deletion-record retention and restore handling | Deployment and deletion-time promises |
 | O08 | Concrete accessibility/performance/reliability targets, size limits and abuse controls | Final release criteria |
 | O09 | Snapshot consistency and idempotent confirmation mechanism | Persistence implementation |
@@ -62,7 +62,7 @@ No claim is made that API access resolves content-retention permission, that cor
 ## Next bounded work
 
 1. Six remaining product defaults have been accepted; apply them to detailed contracts and tests rather than asking for the same approval again.
-2. Resolve O01 with applicable source documentation or the [clarification draft](icecat-clarification-draft.md). Do not send messages externally without authorization.
+2. O01's core questions have a provider response; implement the clarified uses with attribution and dated provenance. The [clarification draft](icecat-clarification-draft.md) is retained as historical context. Do not send further messages externally without authorization.
 3. Specify the first tool rules and remaining technical contracts with boundary examples. "Documented tool checks" means prerequisites for software such as VS Code/Docker, not an Icecat subscription check.
 4. Review the [first implementation milestone](implementation-milestone-1.md), then authorize application development. User-created GitHub repository does not authorize a push, paid service, or deployment.
 
@@ -70,4 +70,12 @@ No claim is made that API access resolves content-retention permission, that cor
 
 The user supplied an email saying Icecat received their registration and a full-access request. The sender asked how the user discovered Icecat, explained Full Icecat is paid, offered product coverage analysis using brand/MPN and optional GTIN, and offered related commerce services/a call.
 
-This is a sales/coverage reply, not confirmation that our free API access has failed or that a paid upgrade is required. Earlier free-account read-only API samples remain the actual access evidence. It also does not answer historical snapshots, normalized-field modifications, attribution, or private JSON exports under the free license. No marketing/tracking links, private contact details, or email identifiers are retained here.
+That initial reply was a sales/coverage reply, not confirmation that our free API access had failed or that a paid upgrade was required. It did not answer historical storage or export. No marketing/tracking links, private contact details, or email identifiers are retained here.
+
+### Follow-up supplied November 12, 2026
+
+The user supplied Icecat's written answers permitting the proposed use of selected specifications in private workspaces and historical snapshots, normalization and user corrections with attribution, inclusion in a user's JSON export, and storage of Open Icecat content on our servers. This is provider clarification as supplied by the user, not independently authenticated correspondence or a general legal opinion.
+
+There is no statement denying access to system specifications. The earlier successful API samples remain access evidence. Published product specifications are distinct from automatic inspection of the user's current machine, which remains out of scope.
+
+Apply this clarification to the described Open Icecat use, without assuming it establishes universal product coverage, permission for all third-party assets, or instructions for every possible future removal/revocation scenario. For ordinary changes, retain dated historical evidence and do not present it as current. These are implementation details rather than a reason to keep the confirmed core uses blocked. Preserve the original email in the user's own records; this repository contains only a factual summary.
