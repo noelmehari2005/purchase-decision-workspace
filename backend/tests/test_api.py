@@ -8,7 +8,12 @@ from backend.app.main import app
 
 class ApiTests(unittest.TestCase):
     def setUp(self):
+        from unittest.mock import patch
+        self.environment = patch.dict('os.environ', {'PDW_AUTH_MODE':'local', 'PDW_LOCAL_STORAGE':'0'})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
         self.client = TestClient(app)
+        self.addCleanup(self.client.close)
         self.payload = {
             'candidates': [{'id': 'a', 'name': 'Laptop A', 'configuration': '16/512',
                             'confirmed': True, 'ram_gb': 16, 'storage_gb': 512,
@@ -66,7 +71,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         self.assertNotIn('input', response.json())
 
-    def test_storage_opt_in_and_no_import_endpoints(self):
+    def test_storage_remains_opt_in(self):
         from unittest.mock import patch
         with patch.dict('os.environ', {'PDW_LOCAL_STORAGE': '0'}):
             self.assertEqual(self.client.get('/api/v1/decisions').status_code, 503)

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {privateAccess,sessionDeadline,workspaceIdentity} from '../src/session.ts'
+import {privateAccess,sessionDeadline,workspaceIdentity,requiresSignIn} from '../src/session.ts'
 const session={mode:'auth0',configured:true,authenticated:true,verified:true,
   user:{id:'owner-a',email:'a@example.com'},csrf:'session-a',idle_until:3700,absolute_until:86500}
 
@@ -26,4 +26,9 @@ test('ordinary session checks preserve the same workspace identity',()=>{
   assert.equal(workspaceIdentity(session),workspaceIdentity({...session,idle_until:3800}))
   assert.equal(workspaceIdentity({...session,verified:false}),'demo')
   assert.equal(workspaceIdentity({mode:'local',authenticated:false,configured:false}),'local')
+})
+
+test('expired or absent sessions offer sign-in while outages do not imply configured auth',()=>{
+  for (const code of ['session_required','session_expired','session_revoked','fresh_auth_required']) assert.equal(requiresSignIn(code),true)
+  for (const code of ['identity_unavailable','auth_unconfigured','storage_unavailable','']) assert.equal(requiresSignIn(code),false)
 })

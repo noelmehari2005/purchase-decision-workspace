@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {SourceEvidence} from './ImportPanel'
 import { CandidateEditor, PlanSummary, TextField } from './components'
 import { requestEvaluation } from './api'
 import { WorkspaceStorage } from './WorkspaceStorage'
@@ -16,6 +17,7 @@ const initialPlan: PlanForm = {savings: '300', contribution: '150', firstDate: '
 
 function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;accountMode?:'local'|'auth0'}) {
   const [step, setStep] = useState(0)
+  const [editorEpoch,setEditorEpoch]=useState(0)
   const [title, setTitle] = useState('Alex’s laptop decision')
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles')
   const [restoring,setRestoring] = useState(storageAllowed && new URLSearchParams(window.location.search).has('decision'))
@@ -64,6 +66,7 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
   const workspace: WorkspaceState = useMemo(()=>({schemaVersion:1, title, timezone, tasks, customNeeds, requirements, preferences, records, plan, outcome, reason}),
     [title,timezone,tasks,customNeeds,requirements,preferences,records,plan,outcome,reason])
   const loadWorkspace = useCallback((state: WorkspaceState)=>{
+    setEditorEpoch(value=>value+1)
     setTitle(state.title); setTimezone(state.timezone); setTasks(state.tasks); setCustomNeeds(state.customNeeds)
     setRequirements(state.requirements); setPreferences(state.preferences); setRecords(state.records)
     setPlan(state.plan); setOutcome(state.outcome); setReason(state.reason); setReview(null); setResponse(null); setApiError(null)
@@ -79,7 +82,9 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
       {...record, confirmed: {...record.draft}, revision: record.revision + 1} : record))
   }
   function editor(record: CandidateRecord) {
-    return <CandidateEditor key={record.draft.id} record={record}
+    return <CandidateEditor key={`${editorEpoch}:${record.draft.id}`} record={record}
+      onImport={storageAllowed ? (before,next)=>setRecords(current=>current.map(r=>
+        r.draft.id===before.id && JSON.stringify(r.draft)===JSON.stringify(before) ? {...r,draft:next}:r)) : undefined}
       onEdit={(key, value) => editLaptop(record.draft.id, key, value)} onConfirm={() => confirmLaptop(record.draft.id)}
       onRemove={record.draft.current ? undefined : () => {
         setRecords(current => current.filter(r => r.draft.id !== record.draft.id))
@@ -114,7 +119,8 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
         <p>Battery runtime: {laptop.battery ? `${laptop.battery} minutes` : 'Unknown'}{laptop.batteryContext ? ` · ${laptop.batteryContext}` : ' · No comparable test context entered.'}</p>
         <p>Performance and repairability: {laptop.notes || 'No supporting evidence entered.'}</p>
         {laptop.source && <p className="source-text">Source: <a href={laptop.source} target="_blank" rel="noreferrer">{laptop.source}</a></p>}
-        <p className="hint">Entered by you; review confirmation does not independently validate the source or diagnose the device.</p>
+        <SourceEvidence draft={laptop}/>
+        <p className="hint">Confirmed by you; review confirmation does not independently validate the source or diagnose the device.</p>
       </details>
       {result.advantages.length > 0 && <ul className="advantages">{result.advantages.map(text => <li key={text}>{text}</li>)}</ul>}
       <div className="plan-grid"><PlanSummary label="Original plan" plan={result.base_plan} provisional={result.provisional} />
@@ -170,7 +176,8 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
         </div><p className="hint">Performance and repairability remain evidence notes in this milestone. Weight and matching battery measurements can support direct tradeoffs; missing evidence never becomes a zero score.</p></section>
       </>}
       {step === 1 && <>{editor(records[0])}<p className="hint">“I’m not sure” is always valid. Missing details leave related requirements unconfirmed. The app does not automatically inspect your device.</p></>}
-      {step === 2 && <><div className="notice">Manual entry is available now. Icecat link imports will be connected in a later milestone; source links entered here are references only.</div>
+      {step === 2 && <><div className="notice">Add a laptop below, then import its specifications from Icecat or enter them manually. Review and confirm each draft before comparing.</div>
+        {!storageAllowed && <p className="hint">Sign in with a verified email to use Icecat importing. Manual entry works in this demo.</p>}
         {records.filter(r => !r.draft.current).map(editor)}
         <button type="button" className="secondary" disabled={records.length >= 20} onClick={() => setRecords([...records, {draft:newLaptop(crypto.randomUUID()), confirmed:null, revision:0}])}>+ Add another laptop</button>
         <p className="hint">{records.length - 1} replacement drafts · maximum 19 in this local workspace. Only confirmed revisions enter comparison.</p>

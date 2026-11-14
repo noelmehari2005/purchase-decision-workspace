@@ -1,3 +1,4 @@
+import {SourceEvidence} from './ImportPanel'
 import {useEffect, useRef, useState} from 'react'
 import {storageRequest} from './api'
 import {money} from './model'
@@ -168,6 +169,7 @@ function HistoricalReview({snapshot,onClose}:{snapshot:SavedReview;onClose:()=>v
         <ul>{row.checks.map(check=><li key={check.label}>{check.label}: {check.status}. {check.reason}</li>)}</ul>
         <div className="plan-grid"><PlanSummary label="Saved original plan" plan={row.base_plan} provisional={row.provisional}/>
           {row.scenario_plan && <PlanSummary label="Saved alternative plan" plan={row.scenario_plan} provisional={row.provisional}/>}</div>
+        <SourceEvidence draft={laptop}/>
         {laptop.source && <p className="source-text">Recorded source: <a href={laptop.source} target="_blank" rel="noreferrer">{laptop.source}</a></p>}
       </article>
     })}

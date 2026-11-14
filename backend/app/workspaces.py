@@ -6,6 +6,7 @@ from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, field_validator, model_validator
+from .import_models import ImportEvidence
 from .schemas import Contract, EvaluationInput, LaptopInput, PreferencesInput
 from .domain import Requirements, evaluate
 
@@ -51,6 +52,10 @@ class LaptopDraft(Contract):
     batteryContext: Text
     source: Annotated[str, Field(max_length=2000)]
     notes: Annotated[str, Field(max_length=3000)]
+    display: Text = ''
+    maxRam: AmountText = ''
+    batteryWh: AmountText = ''
+    evidence: ImportEvidence | None = None
 
     @field_validator('source')
     @classmethod
@@ -221,7 +226,9 @@ def ensure_candidate_revisions(previous, state):
             raise ValueError('A candidate cannot change its baseline identity.')
         if record['revision'] < prior['revision']:
             raise ValueError('Candidate revisions cannot move backward.')
-        if record['confirmed'] != prior['confirmed'] and record['revision'] <= prior['revision']:
+        old_confirmed = LaptopDraft.model_validate(prior['confirmed']).model_dump(mode='json') if prior['confirmed'] else None
+        new_confirmed = LaptopDraft.model_validate(record['confirmed']).model_dump(mode='json') if record['confirmed'] else None
+        if new_confirmed != old_confirmed and record['revision'] <= prior['revision']:
             raise ValueError('Confirm a new candidate revision before replacing reviewed values.')
 
 

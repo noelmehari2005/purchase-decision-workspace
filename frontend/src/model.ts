@@ -1,3 +1,4 @@
+import type {ImportEvidence} from './imports'
 export type Importance = 'high' | 'medium' | 'low' | 'ignored'
 export type Group = 'met' | 'unknown' | 'failed' | 'unset'
 export interface LaptopDraft {
@@ -5,7 +6,7 @@ export interface LaptopDraft {
   ram: string; storage: string; compatible: 'yes' | 'no' | 'unknown';
   costMode: 'components' | 'provisional'; price: string; tax: string; shipping: string;
   other: string; provisional: string; weight: string; battery: string; batteryContext: string;
-  source: string; notes: string;
+  source: string; notes: string; display?:string; maxRam?:string; batteryWh?:string; evidence?:ImportEvidence|null;
 }
 export interface CandidateRecord { draft: LaptopDraft; confirmed: LaptopDraft | null; revision: number }
 export interface RequirementForm { ram: string; storage: string; ceiling: string; noLimit: boolean; compatibility: boolean }
@@ -90,7 +91,7 @@ export function evaluationInput(records: CandidateRecord[], r: RequirementForm, 
 export function newLaptop(id: string, current = false): LaptopDraft {
   return { id, current, name: current ? 'My current laptop' : '', configuration: '', cpu: '', os: '', ram: '', storage: '',
     compatible: 'unknown', costMode: 'components', price: current ? '0' : '', tax: current ? '0' : '',
-    shipping: current ? '0' : '', other: '0', provisional: '', weight: '', battery: '', batteryContext: '', source: '', notes: '' }
+    shipping: current ? '0' : '', other: '0', provisional: '', weight: '', battery: '', batteryContext: '', source: '', notes: '', display:'',maxRam:'',batteryWh:'',evidence:null }
 }
 export function initialRecords(): CandidateRecord[] {
   const current = {...newLaptop('current', true), configuration: 'Alex’s existing configuration', ram: '8', storage: '256',

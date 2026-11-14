@@ -9,3 +9,10 @@
 .storage-controls{border:0;padding:0;margin:0;min-width:0}.storage-controls>.button-row{align-items:center}
 
 .account-panel{background:#fff;padding:18px 4%;border-bottom:1px solid var(--line)}.account-panel>.section-heading{max-width:1440px;margin:auto}.account-panel .button-row{margin:0}.account-panel p{margin-bottom:0}.account-panel>.notice,.account-panel>.error,.account-panel>details{max-width:1100px;margin:14px auto}.account-link{display:inline-flex;align-items:center;min-height:44px;padding:9px 15px;border:1px solid var(--line);border-radius:7px;text-decoration:none;font-size:14px;font-weight:600}.account-link[aria-disabled=true]{opacity:.5;pointer-events:none}.account-panel form{max-width:420px}
+
+.import-panel {margin: 1rem 0; padding: 1rem; border: 1px solid #dce3dd; border-radius: 12px; background: #f6f8f3}
+.import-preview {margin-top: 1.25rem; border-top: 1px solid #dce3dd; padding-top: .75rem}
+.table-scroll {overflow-x: auto; max-width: 100%}
+.table-scroll table {width: 100%; border-collapse: collapse; font-size: .85rem; margin: .75rem 0}
+.table-scroll th, .table-scroll td {text-align: left; vertical-align: top; padding: .65rem; border-bottom: 1px solid #dce3dd; overflow-wrap: anywhere; min-width: 8rem}
+.source-evidence {margin: 1rem 0}

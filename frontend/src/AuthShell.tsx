@@ -1,8 +1,8 @@
 import {useCallback,useEffect,useRef,useState} from 'react'
 import App from './App'
-import {setSessionContext,storageRequest} from './api'
+import {setSessionContext,storageRequest,StorageRequestError} from './api'
 
-import {privateAccess as hasPrivateAccess,sessionDeadline,workspaceIdentity} from './session'
+import {privateAccess as hasPrivateAccess,sessionDeadline,workspaceIdentity,requiresSignIn} from './session'
 import type {SessionStatus} from './session'
 
 const loginPath=(signup=false)=>{
@@ -45,6 +45,9 @@ export default function AuthShell() {
       if (current?.authenticated) {
         clearAddress();apply({mode:'auth0',configured:current.configured,authenticated:false})
         setNotice('Your private workspace was closed. Saved records are unchanged; unsaved edits were cleared. Sign in to reopen your work.')
+      }
+      if (err instanceof StorageRequestError && requiresSignIn(err.code)) {
+        clearAddress();apply({mode:'auth0',configured:true,authenticated:false})
       }
       setError((err as Error).message)
     } finally {loading.current=false}

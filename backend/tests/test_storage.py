@@ -14,7 +14,7 @@ from backend.app.workspaces import StorageError, ensure_candidate_revisions, now
 
 def state_fixture():
     def laptop(key, current=False):
-        return dict(id=key,current=current,name='Current' if current else 'Candidate A',configuration='Exact build',cpu='',os='',ram='8' if current else '16',storage='256' if current else '512',compatible='yes',costMode='components',price='0' if current else '800',tax='0',shipping='0',other='0',provisional='',weight='',battery='',batteryContext='',source='https://example.com/laptop',notes='Fictional evidence')
+        return dict(id=key,current=current,name='Current' if current else 'Candidate A',configuration='Exact build',cpu='',os='',ram='8' if current else '16',storage='256' if current else '512',compatible='yes',costMode='components',price='0' if current else '800',tax='0',shipping='0',other='0',provisional='',weight='',battery='',batteryContext='',source='https://example.com/laptop',notes='Fictional evidence',display='',maxRam='',batteryWh='',evidence=None)
     baseline, candidate = laptop('current',True), laptop('a')
     return dict(schemaVersion=1,title='Test decision',timezone='America/Los_Angeles',tasks=[],customNeeds='',
       requirements=dict(ram='16',storage='512',ceiling='900',noLimit=False,compatibility=True),

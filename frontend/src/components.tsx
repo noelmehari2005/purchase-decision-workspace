@@ -1,3 +1,4 @@
+import {ImportPanel, SourceEvidence} from './ImportPanel'
 import { useState } from 'react'
 import type { CandidateRecord, LaptopDraft, PurchasePlan } from './model'
 import { candidateInput, money, planLabel } from './model'
@@ -10,23 +11,25 @@ export function TextField({label, value, onChange, hint, numeric = false, requir
     {hint && <small>{hint}</small>}</label>
 }
 
-export function CandidateEditor({record, onEdit, onConfirm, onRemove}: {
+export function CandidateEditor({record, onEdit, onConfirm, onRemove, onImport}: {
   record: CandidateRecord; onEdit: (key: keyof LaptopDraft, value: string) => void;
+  onImport?: (before:LaptopDraft,next:LaptopDraft)=>void;
   onConfirm: () => void; onRemove?: () => void;
 }) {
   const [error, setError] = useState('')
   const d = record.draft
   const changed = record.confirmed !== null && JSON.stringify(d) !== JSON.stringify(record.confirmed)
   const edit = (key: keyof LaptopDraft, label: string, hint?: string, numeric = false) =>
-    <TextField label={label} value={String(d[key])} hint={hint} numeric={numeric} onChange={value => {setError(''); onEdit(key, value)}} />
+    <TextField label={label} value={String(d[key] ?? '')} hint={hint} numeric={numeric} onChange={value => {setError(''); onEdit(key, value)}} />
   function confirm() {
     try { candidateInput(d); setError(''); onConfirm() }
     catch (err) { setError((err as Error).message) }
   }
   return <article className="editor-card">
-    <div className="section-heading"><div><span className="eyebrow">{d.current ? 'Your baseline' : 'Manual candidate'}</span>
+    <div className="section-heading"><div><span className="eyebrow">{d.current ? 'Your baseline' : d.evidence ? 'Imported candidate' : 'Manual candidate'}</span>
       <h3>{d.name || 'New laptop'}</h3></div>
       <span className="badge">{!record.confirmed ? 'Draft' : changed ? 'Changes need review' : `Confirmed · revision ${record.revision}`}</span></div>
+    {onImport && <ImportPanel draft={d} onApply={onImport}/>}
     <div className="field-grid">{edit('name', 'Product name')}{edit('configuration', 'Exact configuration', 'Model or part number, plus the particular build you mean.')}
       {edit('cpu', 'Processor (CPU)', 'Optional; leave unknown if you cannot find it.')}{edit('os', 'Operating system', 'Optional; include edition/version if known.')}
       {edit('ram', 'Installed RAM (GB)', 'Unknown? Leave blank.', true)}{edit('storage', 'Installed storage (GB)', 'Example: enter 1000 for a 1 TB marketed drive.', true)}
@@ -39,8 +42,11 @@ export function CandidateEditor({record, onEdit, onConfirm, onRemove}: {
       {edit('weight', 'Laptop weight (grams)', 'Use the selected configuration’s weight.', true)}
       {edit('battery', 'Reported battery runtime (minutes)', 'Optional; battery capacity in Wh is not runtime.', true)}
       {edit('batteryContext', 'Battery test conditions / source', 'Only matching, nonempty contexts support a direct runtime comparison.')}
-      {edit('source', 'Product source link', 'Reference only in this milestone; no information is fetched.')}
+      {edit('source', 'Product source link', 'Reference link. Use Import specifications above to fetch from Icecat.')}
+      {edit('display', 'Display specifications')}{edit('maxRam', 'Maximum supported RAM (GB)', 'Separate from installed RAM.', true)}
+      {edit('batteryWh', 'Battery capacity (Wh)', 'Capacity is not battery runtime.', true)}
     </div></details>
+    <SourceEvidence draft={d}/>
     {!d.current && <><label className="field"><span>Which cost should the plan use?</span><select value={d.costMode} onChange={e => onEdit('costMode', e.target.value)}>
       <option value="components">Sum purchase cost components</option><option value="provisional">Use my provisional total instead</option></select></label>
       <div className="field-grid">{edit('price', 'Item price ($)', 'Blank means unknown.', true)}{edit('tax', 'Estimated tax ($)', 'Enter 0 only if you mean zero.', true)}

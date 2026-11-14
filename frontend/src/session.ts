@@ -14,3 +14,7 @@ export function workspaceIdentity(status:SessionStatus):string {
   if (status.mode==='local') return 'local'
   return privateAccess(status) ? `${status.user!.id}:${status.csrf}` : 'demo'
 }
+
+export function requiresSignIn(code:string):boolean {
+  return ['session_required','session_expired','session_revoked','fresh_auth_required'].includes(code)
+}

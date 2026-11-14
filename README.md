@@ -2,7 +2,7 @@
 
 A purchase decision and planning application, beginning with laptops for programming. Help users assess their current laptop, compare replacements against their needs, and explore a purchase plan they control.
 
-**Status: local implementation, milestones 1–3.** React/TypeScript and Python/FastAPI support the fictional/manual laptop journey, comparison, and savings plans. MongoDB now stores working decisions and immutable historical reviews. Auth0 email/password accounts, verified owner access, session handling, and the local save/sign-out/re-login journey are now verified; see the [account setup guide](docs/auth0-setup.md) and [milestone 3 evidence](docs/implementation-milestone-3.md). Live imports, export, and deployment remain pending; version 1 is still in progress.
+**Status: local implementation, milestones 1–4.** React/TypeScript and Python/FastAPI support the fictional/manual laptop journey, comparison, and savings plans. MongoDB now stores working decisions and immutable historical reviews. Auth0 email/password accounts, verified owner access, session handling, and the local save/sign-out/re-login journey are now verified; see the [account setup guide](docs/auth0-setup.md) and [milestone 3 evidence](docs/implementation-milestone-3.md). Reviewed Icecat imports now support links, IDs, and exact brand/part-number lookup; see [milestone 4](docs/implementation-milestone-4.md) for configuration and limits. Export and deployment remain pending; version 1 is still in progress.
 
 Start with the [local development guide](docs/development.md), then review [milestone 1 evidence](docs/implementation-evidence.md) and [saved-workspace evidence and limitations](docs/implementation-milestone-2.md).
 
