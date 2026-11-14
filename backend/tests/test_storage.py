@@ -58,6 +58,13 @@ class MemoryRepository:
         self.get(owner,decision_id)
         return [dict(id=s['id'],title=s['state']['title'],decision_revision=s['decision_revision'],created_at=s['created_at']) for (o,d,_),s in self.snapshots.items() if o==owner and d==decision_id][offset:offset+limit]
 
+    def export_workspaces(self,owner,limit):
+        return [deepcopy(d) for (o,_),d in sorted(self.decisions.items()) if o==owner][:limit]
+    def export_reviews(self,owner,cutoff,limit):
+        return [deepcopy(d) for (o,_,_),d in sorted(self.snapshots.items()) if o==owner and d['created_at']<=cutoff][:limit]
+    def export_revisions(self,owner,limit):
+        return {d['id']:d['revision'] for d in self.export_workspaces(owner,limit)}
+
 
 class StorageBehavior:
     def setUp(self):

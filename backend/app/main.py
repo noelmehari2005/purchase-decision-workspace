@@ -16,7 +16,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from .domain import Requirements, evaluate
 from .schemas import EvaluationInput, EvaluationOutput
 
-app = FastAPI(title='Purchase Decision Workspace', version='0.4.0')
+app = FastAPI(title='Purchase Decision Workspace', version='0.5.0')
 from .storage_api import install_storage
 install_storage(app)
 from .auth_api import install_auth

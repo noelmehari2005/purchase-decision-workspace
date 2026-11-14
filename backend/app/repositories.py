@@ -122,3 +122,13 @@ class MongoRepository:
                 if not valid:
                     raise StorageError(422, 'invalid_import_evidence', 'This import evidence is unavailable or changed. Import the product again before saving; manual entries remain available.')
                 checked.append(evidence)
+
+    def export_workspaces(self, owner, limit):
+        return self.decisions.find({'owner_id': owner}).sort('_id', 1).limit(limit).max_time_ms(5000)
+
+    def export_reviews(self, owner, cutoff, limit):
+        return self.snapshots.find({'owner_id': owner, 'created_at': {'$lte': cutoff}}).sort('_id', 1).limit(limit).max_time_ms(5000)
+
+    def export_revisions(self, owner, limit):
+        rows = self.decisions.find({'owner_id': owner}, {'id': 1, 'revision': 1}).sort('_id', 1).limit(limit).max_time_ms(5000)
+        return {row['id']: row['revision'] for row in rows}

@@ -7,7 +7,7 @@ from functools import lru_cache
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from .repositories import MongoRepository
 from .workspaces import CreateWorkspace, UpdateWorkspace, CreateSnapshot, StorageError, build_snapshot
@@ -50,6 +50,16 @@ def safe_operation(action):
         raise
     except Exception as error:
         raise StorageError(503, 'storage_unavailable', 'Storage is unavailable. Your local edits are still in this tab; retry when it reconnects.') from error
+
+
+@router.get('/account/export')
+def export_account(owner=Depends(local_owner), repo=Depends(repository)):
+    from .exports import build_export
+    content = safe_operation(lambda: build_export(repo, owner))
+    return Response(content, media_type='application/json', headers={
+        'Content-Disposition': 'attachment; filename="purchase-decision-workspace-export.json"',
+        'Cache-Control': 'no-store', 'Pragma': 'no-cache', 'X-Content-Type-Options': 'nosniff',
+    })
 
 
 @router.get('/storage')

@@ -1,3 +1,4 @@
+import {ExportControls} from './ExportControls'
 import {SourceEvidence} from './ImportPanel'
 import {useEffect, useRef, useState} from 'react'
 import {storageRequest} from './api'
@@ -140,6 +141,7 @@ export function WorkspaceStorage({state,onLoad,onReady,onTitle,onTimezone,accoun
       <div className="button-row"><button type="button" disabled={busy || historyOffset===0} onClick={()=>setHistoryOffset(Math.max(0,historyOffset-10))}>Newer reviews</button>
         <button type="button" disabled={busy || reviews.length<10} onClick={()=>setHistoryOffset(historyOffset+10)}>Older reviews</button></div>
     </details>}
+    <ExportControls dirty={dirty}/>
     {historical && <HistoricalReview snapshot={historical} onClose={()=>setHistorical(null)}/>}
     </fieldset>
   </section>

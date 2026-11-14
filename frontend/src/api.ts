@@ -15,7 +15,9 @@ export async function requestEvaluation(payload: unknown, signal: AbortSignal): 
 }
 
 let sessionCsrf:string|null=null
-export function setSessionContext(csrf:string|null) {sessionCsrf=csrf}
+let contextVersion=0
+export function sessionContextVersion() {return contextVersion}
+export function setSessionContext(csrf:string|null) {if(sessionCsrf!==csrf)contextVersion++;sessionCsrf=csrf}
 
 export class StorageRequestError extends Error {
   code: string
