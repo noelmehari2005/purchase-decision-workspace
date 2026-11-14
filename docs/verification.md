@@ -1,6 +1,6 @@
 # Verification and traceability
 
-This is a plan, not a test report. No production implementation, automated application tests, usability study, or professional review exists yet.
+Status: local verification index, updated November 13, 2026. The application and automated tests now exist. This document separates implemented/local evidence from outstanding release work; no production deployment, independent usability study, or formal accessibility/security certification has been completed.
 
 ## Requirement → design → CS concept → evidence
 
@@ -15,7 +15,20 @@ This is a plan, not a test report. No production implementation, automated appli
 | R17–R18 | Ownership and explicit lifecycle | Authentication vs authorization; state machines; failure recovery | Cross-account denial, session revocation, recovery boundary and purge tests. |
 | R20 | Domain functions separate from external systems | Separation of concerns, dependency inversion | Change a formula/source without rewriting unrelated user flows. |
 
-Implementation references will be added once code exists. Do not invent line references, completed checks, or coverage percentages before then.
+## Current implementation evidence
+
+| Requirements | Implemented evidence | Practical limit |
+| --- | --- | --- |
+| R01–R02 | [App needs/current-device flow](../frontend/src/App.tsx), [model tests](../frontend/tests/model.test.mjs), [domain tests](../backend/tests/test_domain.py); local keyboard/mobile walkthrough. | No automatic system diagnosis or task-to-hardware inference. |
+| R03–R06 | [Icecat adapter](../backend/app/icecat.py), [import tests](../backend/tests/test_imports.py), [live import evidence](implementation-milestone-4.md). | One HP configuration verified live; source coverage across other brands remains unestablished. |
+| R07–R10 | [Domain rules](../backend/app/domain.py), domain/API/model tests and [comparison evidence](implementation-milestone-1.md). | Performance/repairability remain evidence notes; direct preference tradeoffs require comparable measurements. No overall winner score. |
+| R11–R15 | Domain calendar/cost/budget/scenario tests; frontend decimal parsing and payload tests. | The plan models entered assumptions, not future prices, interest, financing, or independently validated affordability. |
+| R16/R19 | [Storage tests](../backend/tests/test_storage.py), [exports](../backend/tests/test_exports.py), [milestones 2](implementation-milestone-2.md) and [5](implementation-milestone-5.md). | Choose a confirmed candidate or keep the decision undecided; unconfirmed drafts remain preserved but excluded from comparisons. Export is a read window with revision checks, not an account-wide transaction. |
+| R17 | [Auth0 provider tests](../backend/tests/test_auth_provider.py), [signed OIDC tests](../backend/tests/test_oidc.py), [account tests](../backend/tests/test_auth.py), [Mongo account tests](../backend/tests/test_auth_mongo.py), [live account evidence](implementation-milestone-3.md). | Database account isolation uses controlled provider responses; a second live Auth0 account was not exercised. Deployment remains loopback-only. |
+| R18 | [Lifecycle tests](../backend/tests/test_lifecycle.py), [recovery UI rendering](../frontend/tests/lifecycle-view.test.mjs), [deletion evidence](implementation-milestone-6.md). | SMTP and provider cleanup need credentials and live verification; scheduling and infrastructure backup expiry/restore remain outstanding. |
+| R20 | Separate domain/schemas/repositories/provider/import/lifecycle/frontend modules; independent schema and calculation versions. | Extensibility is an architectural boundary, not evidence that other product categories are implemented. |
+
+Read dated milestone reports for exact commands and results. No code-coverage percentage is claimed. Historical reports describe their own implementation date and may list work completed by later milestones.
 
 ## Calculation cases
 
@@ -57,7 +70,13 @@ Use small controlled response fixtures for repeatable adapter tests, retaining o
 
 Walk the fictional Alex scenario with someone who has not designed it. Ask them to explain eligible/unconfirmed/failed status, source confirmation, provisional costs, and base vs alternative plan. Observe rather than instruct them through mistakes. Record actual findings and iterate.
 
-Check keyboard-only navigation, focus after errors and screen changes, visible labels, dynamic announcements, small-screen overflow, and non-color status indicators. Set concrete accessibility/performance release targets before implementation review; don't claim compliance from a wireframe.
+Local checks on November 13 exercised all five steps at 320 CSS pixels, a 180-character unbroken product name, keyboard step activation and heading focus, a functioning skip link, visible field labels/hints, candidate-validation alerts, and keyboard scrolling inside source tables. The page stayed within the viewport; source tables scroll within their own focusable region. Temporary edits were restored and the saved workspace remained unchanged. See [milestone 7](implementation-milestone-7.md).
+
+Release targets: retain essential controls and information at 320 CSS pixels without page-wide horizontal scrolling; let source tables scroll in labeled regions; make primary flows keyboard-operable with visible focus and associated labels; announce validation errors and async results; retain text eligibility labels alongside color. These local observations do not establish full WCAG conformance. A full keyboard journey across authentication/recovery states, screen-reader and zoom checks, contrast audit, and an independent usability exercise remain to be completed. No runtime performance score or latency percentile is claimed.
+
+## Dependency advisory evidence
+
+On November 13, the user ran pip-audit 2.10.1 against the pinned backend lockfile in an isolated tool environment: no known vulnerabilities found. The full frontend `npm audit` reported zero vulnerabilities. No app dependency was changed. Package-advisory results are time-specific and do not replace code/configuration, application-security or supply-chain review. See [milestone 7](implementation-milestone-7.md).
 
 ## Release evidence
 

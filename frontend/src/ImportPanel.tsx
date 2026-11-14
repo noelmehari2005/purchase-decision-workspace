@@ -33,7 +33,7 @@ export function ImportPanel({draft,onApply}:{draft:LaptopDraft;onApply:(before:L
     {error&&<p className="error" role="alert">{error} You can fill in the fields below manually.</p>}
     {preview&&<section className="import-preview" aria-label="Import review"><h4>Review {preview.evidence.brand} · {preview.evidence.mpn}</h4>
       <p className="hint">Fetched {new Date(preview.evidence.retrieved_at).toLocaleString()} · English · Icecat ID {preview.evidence.product_id}</p>
-      <div className="table-scroll"><table><thead><tr><th>Specification</th><th>Icecat proposes</th><th>Your current entry</th></tr></thead><tbody>{specKeys.map(key=>{
+      <div className="table-scroll" role="region" tabIndex={0} aria-label={`Imported specifications for ${preview.evidence.brand} ${preview.evidence.mpn}`}><table><thead><tr><th>Specification</th><th>Icecat proposes</th><th>Your current entry</th></tr></thead><tbody>{specKeys.map(key=>{
         const field=preview.evidence.fields.find(f=>f.field===key)
         return <tr key={key}><th scope="row">{specLabels[key]}</th><td>{field?.normalized||'Unknown'}</td><td>{preview.before[key]||'Unknown'}
           {sameProduct(preview.before,preview.evidence)&&(preview.before[key]||'')!==(field?.normalized||'')&&<label className="check"><input type="checkbox" checked={keep.includes(key)}
@@ -56,7 +56,7 @@ export function SourceEvidence({draft}:{draft:LaptopDraft}) {
   return <details className="source-evidence"><summary>Imported source and your corrections</summary>
     <p><a href={source.source_url} target="_blank" rel="noreferrer">Open Icecat · {source.brand} · {source.mpn}</a></p>
     <p className="hint">Retrieved {new Date(source.retrieved_at).toLocaleString()} · {source.language} · Mapping {source.mapper_version}. Source update date unavailable.</p>
-    <div className="table-scroll"><table><thead><tr><th>Field</th><th>Source value</th><th>Imported value</th><th>Your value</th></tr></thead><tbody>{source.fields.map(field=>
+    <div className="table-scroll" role="region" tabIndex={0} aria-label={`Source evidence for ${source.brand} ${source.mpn}`}><table><thead><tr><th>Field</th><th>Source value</th><th>Imported value</th><th>Your value</th></tr></thead><tbody>{source.fields.map(field=>
       <tr key={field.field}><th scope="row">{specLabels[field.field]}</th><td>{field.raw} {field.unit}</td><td>{field.normalized}</td><td>{draft[field.field]||'Unknown'}{draft[field.field]!==field.normalized?' · corrected by you':''}</td></tr>)}</tbody></table></div>
     {source.issues.map(issue=><p key={issue} className="hint">{issue}</p>)}
     <p className="hint">Specifications attributed to Open Icecat. Imported data is evidence for this configuration, not a measured performance guarantee.</p>

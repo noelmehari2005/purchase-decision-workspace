@@ -139,7 +139,7 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
       <nav aria-label="Decision steps">{steps.map((label, index) => <button key={label} type="button" aria-current={index === step ? 'step' : undefined} onClick={() => goTo(index)}>
         <span className="step-number" aria-hidden="true">{index + 1}</span>{label}</button>)}</nav>
       <div className="sidebar-note"><strong>Your choice, explained.</strong><p>Keep the laptop you own, investigate a gap, or plan a replacement.</p></div>
-    </aside><main id="workspace">
+    </aside><main id="workspace" tabIndex={-1}>
       <div className="page-heading"><span className="eyebrow">Step {step + 1} of {steps.length}</span>
         <h1 ref={titleRef} tabIndex={-1}>{steps[step]}</h1><p>{[
           'Start with what you need to do, not a hardware score.', 'Understand what works before deciding to replace it.',

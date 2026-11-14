@@ -96,14 +96,14 @@ The installed Starlette emits a TestClient/httpx deprecation warning. Tests curr
 - `backend/app/main.py`: versioned health/evaluation routes and API error handling.
 - `backend/app/workspaces.py`: bounded workspace schemas, confirmation-revision rules, and authoritative snapshot creation.
 - `backend/app/repositories.py`: MongoDB reads, atomic expected-revision updates, and immutable snapshot inserts.
-- `backend/app/storage_api.py`: opt-in local storage routes and server-owned development identity.
+- `backend/app/storage_api.py`: explicit storage/export/deletion routes with server-derived account ownership and an isolated local demonstration mode.
 - `frontend/src/WorkspaceStorage.tsx`: explicit saves/opening, conflict messages, and historical review display.
 - `frontend/src/model.ts`: typed form state, exact decimal-to-cents conversion, and confirmed-revision payload preparation.
 - `frontend/src/api.ts`: evaluation transport, errors, and cancellation.
 - `frontend/src/components.tsx`: candidate review and plan display.
 - `frontend/src/App.tsx`: the five-step in-memory journey and stale-result/review handling.
 
-Change rules behind these boundaries and increment model versions when behavior changes. Later milestones can add persistence and import adapters without moving financial arithmetic into components. Evaluation requests contain selected calculation inputs; explicit workspace saves additionally send the bounded full working state, including drafts, notes, and source references, to the local database. No credentials are embedded. Account mode loads the ignored `backend/.env`; never commit that file or share its values in chat. Storage is disabled unless `PDW_LOCAL_STORAGE=1`; optional backend settings are `PDW_MONGO_URI` (default `mongodb://127.0.0.1:27017`) and `PDW_MONGO_DATABASE` (default `purchase_decision_workspace`). Do not point this local development setup at a shared or production database.
+Change rules behind these boundaries and increment model versions when behavior changes. Future adapters and storage changes belong behind these boundaries without moving financial arithmetic into components. Evaluation requests contain selected calculation inputs; explicit workspace saves additionally send the bounded full working state, including drafts, notes, and source references, to the local database. No credentials are embedded. Account mode loads the ignored `backend/.env`; never commit that file or share its values in chat. Storage is disabled unless `PDW_LOCAL_STORAGE=1`; optional backend settings are `PDW_MONGO_URI` (default `mongodb://127.0.0.1:27017`) and `PDW_MONGO_DATABASE` (default `purchase_decision_workspace`). Do not point this local development setup at a shared or production database.
 
 ## Account verification checks
 
@@ -114,3 +114,19 @@ PDW_TEST_MONGO_URI=mongodb://127.0.0.1:27017 .venv/bin/python -m unittest backen
 ```
 
 Live provider signup, verification, and password reset require the account holder and are recorded separately from automated fixtures.
+
+
+## Read-only readiness checks
+
+```sh
+.venv/bin/python -m backend.app.readiness
+.venv/bin/python -m backend.app.readiness --check-database
+```
+
+The first command inspects configuration presence/shape only. The optional database check pings MongoDB and reads the maintenance heartbeat and overdue-work counts. It never sends mail, calls Auth0/Icecat, runs cleanup, or changes records/indexes. Output excludes secret values, identities, budgets and connection strings. `configured_unverified` means the command did not exercise the external service; dated milestone reports record prior live checks separately.
+
+Exit 1 means missing/invalid local configuration, unavailable database, or maintenance attention is required. Exit 0 means those requested local checks passed; it is not permission to deploy. `release_ready` remains false while the documented release blockers exist. SMTP/deletion-client missing statuses are expected before following the [setup guide](deletion-and-email-setup.md).
+
+The maintenance command records a bounded singleton heartbeat (run ID, progress phase and timestamps/status). Notification and account-cleanup progress refresh it; no user-specific content is stored there. Diagnostics flag a running job without progress for five minutes and a last completed job older than three minutes. These thresholds are operator signals, not proof a process is dead or that a scheduler is installed. A failed database write can leave a heartbeat stale; check the scheduler and storage before rerunning destructive maintenance.
+
+Dependency advisory scans require registry access. Audit the locked Python dependencies in an isolated tool environment using [pip-audit](https://pypi.org/project/pip-audit/) and run `npm audit` in the frontend. Review findings and compatible updates; do not treat a network failure or an uninstalled audit tool as a clean audit.

@@ -116,8 +116,8 @@ export function WorkspaceStorage({state,onLoad,onReady,onTitle,onTimezone,accoun
     <h2>Your saved workspace</h2>
     <fieldset className="storage-controls" disabled={initializing}>
     <p className="hint">{accountMode==='local'?'Local single-user demonstration. Use fictional data.':'Saved workspaces belong to your signed-in account.'} Save changes explicitly; unsaved edits are lost on reload or sign-out.</p>
-    <div className="field-grid"><TextField label="Workspace title" value={state.title} onChange={onTitle}/>
-      <TextField label="Calendar timezone" value={state.timezone} onChange={onTimezone} hint="IANA name, for example America/Los_Angeles. Contribution dates are local calendar dates."/></div>
+    <div className="field-grid"><TextField maxLength={120} label="Workspace title" value={state.title} onChange={onTitle}/>
+      <TextField maxLength={80} label="Calendar timezone" value={state.timezone} onChange={onTimezone} hint="IANA name, for example America/Los_Angeles. Contribution dates are local calendar dates."/></div>
     <div className="button-row"><button className="primary" type="button" disabled={busy || !dirty} onClick={()=>void run(async()=>{await save()})}>{busy?'Working…':saved?'Save changes':'Save workspace'}</button>
       {saved && <button type="button" disabled={busy} onClick={()=>void run(async()=>{await save(true)})}>Save as a new workspace</button>}
       <span className="hint">{saved ? `Revision ${saved.revision} · ${dirty?'Unsaved changes':'All changes saved'}`:'Not saved yet'}</span></div>

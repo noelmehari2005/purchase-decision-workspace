@@ -64,7 +64,7 @@ class AccountLifecycle:
         self.sessions.delete_many({'owner_id':user['_id'],'lifecycle_version':user.get('lifecycle_version')})
         return {'restored':True,'message':'Deletion cancelled. Your saved workspaces are available again.'}
 
-    def purge_due(self,delete_identity,limit=25,clock=None):
+    def purge_due(self,delete_identity,limit=25,clock=None,progress=None):
         from pymongo import ReturnDocument
         stamp=time.time() if clock is None else clock
         counts={'completed':0,'retry_pending':0}
@@ -79,6 +79,7 @@ class AccountLifecycle:
                         {'state':'purging','$or':[{'purge_lease_until':{'$lte':stamp}},{'purge_lease_until':{'$exists':False}}]}]},
                 {'$set':{'state':'purging','purge_lease':lease,'purge_lease_until':stamp+180}},return_document=ReturnDocument.AFTER)
             if not user:continue
+            if progress:progress()
             try:
                 self.ledger.update_one({'_id':'account:'+owner},{'$setOnInsert':{
                     'kind':'account','owner_id':owner,'delete_after':user['delete_after'],
@@ -101,4 +102,5 @@ class AccountLifecycle:
                 self.users.update_one({'_id':owner,'state':'purging','purge_lease':lease},
                     {'$set':{'purge_lease_until':stamp+60}})
                 counts['retry_pending']+=1
+            if progress:progress()
         return counts

@@ -1,14 +1,15 @@
 import {ImportPanel, SourceEvidence} from './ImportPanel'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { CandidateRecord, LaptopDraft, PurchasePlan } from './model'
 import { candidateInput, money, planLabel } from './model'
 
-export function TextField({label, value, onChange, hint, numeric = false, required = false}: {
-  label: string; value: string; onChange: (value: string) => void; hint?: string; numeric?: boolean; required?: boolean;
+export function TextField({label, value, onChange, hint, numeric = false, required = false, maxLength}: {
+  label: string; value: string; onChange: (value: string) => void; hint?: string; numeric?: boolean; required?: boolean; maxLength?:number;
 }) {
-  return <label className="field"><span>{label}</span><input value={value} onChange={e => onChange(e.target.value)}
-    inputMode={numeric ? 'decimal' : undefined} maxLength={numeric ? 20 : 300} required={required} />
-    {hint && <small>{hint}</small>}</label>
+  const id=useId()
+  return <div className="field"><label htmlFor={id}>{label}</label><input id={id} aria-describedby={hint?`${id}-hint`:undefined} value={value} onChange={e => onChange(e.target.value)}
+    inputMode={numeric ? 'decimal' : undefined} maxLength={maxLength ?? (numeric ? 20 : 300)} required={required} />
+    {hint && <small id={`${id}-hint`}>{hint}</small>}</div>
 }
 
 export function CandidateEditor({record, onEdit, onConfirm, onRemove, onImport}: {
@@ -16,18 +17,19 @@ export function CandidateEditor({record, onEdit, onConfirm, onRemove, onImport}:
   onImport?: (before:LaptopDraft,next:LaptopDraft)=>void;
   onConfirm: () => void; onRemove?: () => void;
 }) {
+  const headingId=useId()
   const [error, setError] = useState('')
   const d = record.draft
   const changed = record.confirmed !== null && JSON.stringify(d) !== JSON.stringify(record.confirmed)
   const edit = (key: keyof LaptopDraft, label: string, hint?: string, numeric = false) =>
-    <TextField label={label} value={String(d[key] ?? '')} hint={hint} numeric={numeric} onChange={value => {setError(''); onEdit(key, value)}} />
+    <TextField maxLength={key==='name'?200:key==='source'?2000:undefined} label={label} value={String(d[key] ?? '')} hint={hint} numeric={numeric} onChange={value => {setError(''); onEdit(key, value)}} />
   function confirm() {
     try { candidateInput(d); setError(''); onConfirm() }
     catch (err) { setError((err as Error).message) }
   }
-  return <article className="editor-card">
+  return <article className="editor-card" aria-labelledby={headingId}>
     <div className="section-heading"><div><span className="eyebrow">{d.current ? 'Your baseline' : d.evidence ? 'Imported candidate' : 'Manual candidate'}</span>
-      <h3>{d.name || 'New laptop'}</h3></div>
+      <h3 id={headingId}>{d.name || 'New laptop'}</h3></div>
       <span className="badge">{!record.confirmed ? 'Draft' : changed ? 'Changes need review' : `Confirmed · revision ${record.revision}`}</span></div>
     {onImport && <ImportPanel draft={d} onApply={onImport}/>}
     <div className="field-grid">{edit('name', 'Product name')}{edit('configuration', 'Exact configuration', 'Model or part number, plus the particular build you mean.')}

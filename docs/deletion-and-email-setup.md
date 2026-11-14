@@ -35,7 +35,9 @@ The implementation follows [Auth0 Delete a User](https://auth0.com/docs/api/mana
 
 ## Running maintenance
 
-Restart the backend after changing its environment. Maintenance is a separate operator command:
+Restart the backend after changing its environment. For a read-only configuration check, run `.venv/bin/python -m backend.app.readiness`; add `--check-database` to inspect job health and overdue-work counts. Missing SMTP/cleanup settings are reported without sending messages, contacting providers, or deleting data. Configuration presence is not proof of live delivery or permissions.
+
+Maintenance is a separate operator command:
 
 ```sh
 cd /Users/noelmehari/Documents/Portfolio/purchase-decision-workspace

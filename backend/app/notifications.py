@@ -41,7 +41,7 @@ def smtp_send(recipient,requested_at,deadline):
         if client.send_message(message):raise RuntimeError('Recipient refused')
 
 
-def deliver_pending(database,send=smtp_send,limit=25,clock=None):
+def deliver_pending(database,send=smtp_send,limit=25,clock=None,progress=None):
     from pymongo import ReturnDocument
     stamp=time.time() if clock is None else clock
     counts={'sent':0,'retry_pending':0}
@@ -55,6 +55,7 @@ def deliver_pending(database,send=smtp_send,limit=25,clock=None):
                      'deletion_notice.lease_until':stamp+120},'$inc':{'deletion_notice.attempts':1}},
             return_document=ReturnDocument.AFTER)
         if not user:break
+        if progress:progress()
         query={'_id':user['_id'],'deletion_notice.id':user['deletion_notice']['id'],
                'deletion_notice.lease':lease,'deletion_notice.status':'sending'}
         try:
@@ -65,4 +66,5 @@ def deliver_pending(database,send=smtp_send,limit=25,clock=None):
             delay=min(3600,60*2**min(user['deletion_notice']['attempts'],6))
             database.users.update_one(query,{'$set':{'deletion_notice.status':'queued','deletion_notice.next_attempt':stamp+delay}})
             counts['retry_pending']+=1
+        if progress:progress()
     return counts

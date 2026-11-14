@@ -18,13 +18,34 @@ def run(database,delete_user=delete_identity,send=None):
     from .repositories import MongoRepository
     from .identity import expiration
     import time
-    repo=MongoRepository(database)
-    mail=deliver_pending(database,send or smtp_send)
-    purge=AccountLifecycle(database).purge_due(delete_user)
-    cleaned=repo.cleanup_deleted_workspaces()
-    for collection in ('login_flows','auth_limits'):
-        database[collection].delete_many({'expires_at':{'$lte':expiration(time.time())}})
-    return {'notifications':mail,'accounts':purge,'workspace_cleanups':cleaned}
+    from uuid import uuid4
+    run_id=str(uuid4())
+    database.system_status.update_one({'_id':'maintenance'},{'$set':{'run_id':run_id,'started_at':time.time(),
+        'finished_at':None,'heartbeat_at':time.time(),'phase':'starting','status':'running'}},upsert=True)
+    def tick(phase):
+        database.system_status.update_one({'_id':'maintenance','run_id':run_id},
+            {'$set':{'heartbeat_at':time.time(),'phase':phase}})
+    try:
+        repo=MongoRepository(database)
+        tick('notifications')
+        mail=deliver_pending(database,send or smtp_send,progress=lambda:tick('notifications'))
+        tick('account_cleanup')
+        purge=AccountLifecycle(database).purge_due(delete_user,progress=lambda:tick('account_cleanup'))
+        tick('workspace_cleanup')
+        cleaned=repo.cleanup_deleted_workspaces()
+        for collection in ('login_flows','auth_limits'):
+            database[collection].delete_many({'expires_at':{'$lte':expiration(time.time())}})
+        result={'notifications':mail,'accounts':purge,'workspace_cleanups':cleaned}
+        state='retry_pending' if mail['retry_pending'] or purge['retry_pending'] else 'ok'
+        database.system_status.update_one({'_id':'maintenance','run_id':run_id},
+            {'$set':{'finished_at':time.time(),'status':state}})
+        return result
+    except Exception:
+        try:database.system_status.update_one({'_id':'maintenance','run_id':run_id},
+            {'$set':{'finished_at':time.time(),'status':'failed'}})
+        except Exception:pass
+        raise
+
 
 
 def main():
