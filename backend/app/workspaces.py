@@ -202,6 +202,11 @@ class UpdateWorkspace(Contract):
     state: WorkspaceState
 
 
+class DeleteWorkspace(Contract):
+    expected_revision: Annotated[int, Field(strict=True, ge=1)]
+    confirmation: Literal['DELETE']
+
+
 class CreateSnapshot(Contract):
     request_id: UUID
     expected_revision: Annotated[int, Field(strict=True, ge=1)]

@@ -16,13 +16,15 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from .domain import Requirements, evaluate
 from .schemas import EvaluationInput, EvaluationOutput
 
-app = FastAPI(title='Purchase Decision Workspace', version='0.5.0')
+app = FastAPI(title='Purchase Decision Workspace', version='0.6.0')
 from .storage_api import install_storage
 install_storage(app)
 from .auth_api import install_auth
 install_auth(app)
 from .import_api import router as import_router
 app.include_router(import_router)
+from .lifecycle_api import router as lifecycle_router
+app.include_router(lifecycle_router)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', 'testserver'])
 
 

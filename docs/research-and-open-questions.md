@@ -53,8 +53,8 @@ No claim is made that API access resolves content-retention permission, that cor
 | O03 | Exact assessment rule set for VS Code/Docker across supported OS/versions | Implementing automated tool checks; retain unknown otherwise |
 | O04 | Product defaults resolved: original monthly anchor/last-day fallback, incomplete budgets, explicit provisional-total choice, empty-requirement explanation. Boundary tests still required. | Calculation/assessment implementation |
 | O05 | Verification gate/session settings accepted. Provider final configuration, password-reset integration, and email delivery remain to verify. | Account implementation and public registration |
-| O06 | JSON format and individual item deletion accepted. Provider reply permits specification export. Precise user-data retention execution remains to specify. | Final privacy flows/contracts |
-| O07 | Hosting budget/services, backups, purge jobs, provider deletion, deletion-record retention and restore handling | Deployment and deletion-time promises |
+| O06 | JSON export and revision-checked individual workspace deletion implemented and verified. Account recovery and cleanup adapters implemented; email/provider setup and retention operations remain. | Final privacy flows/contracts |
+| O07 | Purge/notification worker and Auth0 deletion adapter implemented. Hosting, supervised scheduling, actual provider deletion/email delivery, backup expiration, marker retention and isolated restore verification remain | Deployment and deletion-time promises |
 | O08 | Concrete accessibility/performance/reliability targets, size limits and abuse controls | Final release criteria |
 | O09 | Snapshot consistency and idempotent confirmation mechanism | Persistence implementation |
 | O10 | Consolidated design-package review and explicit implementation authorization | Scaffolding/application development |

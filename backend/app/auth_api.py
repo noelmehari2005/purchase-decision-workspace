@@ -43,10 +43,10 @@ def csrf_check(request,session):
         raise StorageError(403,'csrf_required','Refresh your session before making changes.')
 
 
-def checked_session(request,store,source):
+def checked_session(request,store,source,allow_pending=False):
     from pymongo.errors import PyMongoError
     try:
-        record,user=store.session(request.cookies.get(SESSION_COOKIE))
+        record,user=store.session(request.cookies.get(SESSION_COOKIE),allow_pending=True) if allow_pending else store.session(request.cookies.get(SESSION_COOKIE))
         user=store.refresh_profile(user,source.profile(user['subject']),record)
         return record,user
     except PyMongoError as error:
@@ -79,8 +79,9 @@ def session_status(request:Request):
         if error.code in ('auth_unconfigured','auth_dependencies_missing'):return {'mode':'auth0','configured':False,'authenticated':False}
         raise
     if not request.cookies.get(SESSION_COOKIE):return {'mode':'auth0','configured':True,'authenticated':False}
-    record,user=checked_session(request,identity_store(),source)
-    return {'mode':'auth0','configured':True,'authenticated':True,'verified':user['email_verified'],
+    record,user=checked_session(request,identity_store(),source,allow_pending=True)
+    from .lifecycle import status as lifecycle_status
+    return {**lifecycle_status(user),'notification_delivery_configured':bool(os.environ.get('PDW_SMTP_HOST') and os.environ.get('PDW_SMTP_FROM')),'mode':'auth0','configured':True,'authenticated':True,'verified':user['email_verified'],
         'user':{'id':user['_id'],'email':user['email']},'csrf':record['csrf'],
         'idle_until':record['last_active']+IDLE_SECONDS,'absolute_until':record['absolute_until']}
 
@@ -136,7 +137,7 @@ async def callback(request:Request):
 
 @router.post('/activity')
 def activity(request:Request):
-    record,_user=checked_session(request,identity_store(),provider())
+    record,_user=checked_session(request,identity_store(),provider(),allow_pending=True)
     csrf_check(request,record)
     identity_store().touch(request.cookies.get(SESSION_COOKIE))
     return {'idle_until':min(time.time()+IDLE_SECONDS,record['absolute_until'])}
@@ -147,9 +148,9 @@ def logout(request:Request):
     allowed_origin(request)
     store=identity_store()
     token=request.cookies.get(SESSION_COOKIE)
-    try:record,_=store.session(token)
+    try:record,_=store.session(token,allow_pending=True)
     except StorageError as error:
-        if error.status!=401:raise
+        if error.status not in (401,403):raise
     else:csrf_check(request,record)
     store.revoke(token)
     response=JSONResponse({'signed_out':True})

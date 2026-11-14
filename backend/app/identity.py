@@ -33,6 +33,7 @@ def credential_version(value):
 class IdentityStore:
     def __init__(self, database):
         self.users=database.users
+        self.ledger=database.deletion_ledger
         self.sessions=database.app_sessions
         self.flows=database.login_flows
         self.limits=database.auth_limits
@@ -65,19 +66,27 @@ class IdentityStore:
             raise StorageError(401,'fresh_auth_required','Sign in again after changing your password.')
         # Issuer + subject identifies a user. Email is never an ownership/linking key.
         owner='user_'+digest(issuer+'\0'+subject)
-        self.users.update_one({'_id':owner},{'$setOnInsert':{'issuer':issuer,'subject':subject,'state':'active','created_at':stamp},
-            '$set':{'email':email,'email_verified':verified}},upsert=True)
+        marker=self.ledger.find_one({'_id':'account:'+owner})
+        if marker and marker.get('kind')=='account':
+            raise StorageError(403,'account_restricted','This account is no longer available.')
+        from pymongo.errors import DuplicateKeyError
+        try:
+            self.users.update_one({'_id':owner,'state':{'$in':['active','pending_deletion']}},
+                {'$setOnInsert':{'issuer':issuer,'subject':subject,'state':'active','created_at':stamp},
+                 '$set':{'email':email,'email_verified':verified}},upsert=True)
+        except DuplicateKeyError as error:
+            raise StorageError(403,'account_restricted','This account is no longer available.') from error
         user=self.users.find_one({'_id':owner})
-        if user['state']!='active':
+        if user['state'] not in ('active','pending_deletion'):
             raise StorageError(403,'account_restricted','This account cannot access ordinary workspaces.')
         token=secrets.token_urlsafe(32)
         csrf=secrets.token_urlsafe(32)
         self.sessions.insert_one({'_id':digest(token),'owner_id':owner,'created_at':stamp,'auth_time':auth_time,
-            'last_active':stamp,'absolute_until':stamp+ABSOLUTE_SECONDS,'csrf':csrf,'credential_version':version,
+            'last_active':stamp,'absolute_until':stamp+ABSOLUTE_SECONDS,'csrf':csrf,'credential_version':version,'lifecycle_version':user.get('lifecycle_version'),
             'expires_at':expiration(stamp+ABSOLUTE_SECONDS)})
         return token
 
-    def session(self,token,clock=None):
+    def session(self,token,clock=None,allow_pending=False):
         stamp=time.time() if clock is None else clock
         record=self.sessions.find_one({'_id':digest(token)}) if token else None
         if not record:
@@ -86,7 +95,13 @@ class IdentityStore:
             self.revoke(token)
             raise StorageError(401,'session_expired','Your session expired. Sign in again to reopen saved work.')
         user=self.users.find_one({'_id':record['owner_id']})
-        if not user or user['state']!='active':
+        marker=self.ledger.find_one({'_id':'account:'+record['owner_id']})
+        if marker and marker.get('kind')=='account':
+            raise StorageError(403,'account_restricted','This account is no longer available.')
+        if user and record.get('lifecycle_version')!=user.get('lifecycle_version'):
+            self.revoke(token)
+            raise StorageError(401,'session_revoked','Sign in again to check your account status.')
+        if not user or user['state'] not in (('active','pending_deletion') if allow_pending else ('active',)):
             raise StorageError(403,'account_restricted','This account cannot access ordinary workspaces.')
         return record,user
 
@@ -113,7 +128,10 @@ class IdentityStore:
         email=profile.get('email','')
         if not isinstance(email,str) or not email or len(email)>320:
             raise StorageError(503,'identity_unavailable','Unable to verify your account right now.')
-        self.users.update_one({'_id':user['_id']},{'$set':{'email_verified':verified,'email':email}})
+        result=self.users.update_one({'_id':user['_id'],'state':{'$in':['active','pending_deletion']},
+            'lifecycle_version':session.get('lifecycle_version')},{'$set':{'email_verified':verified,'email':email}})
+        if result.matched_count==0:
+            raise StorageError(403,'account_restricted','Your account state changed. Sign in again to check its status.')
         return {**user,'email_verified':verified,'email':email}
 
     def rate_limit(self,key,maximum,seconds,clock=None):

@@ -1,9 +1,10 @@
 export interface SessionStatus {
+  account_state?:'active'|'pending_deletion'; delete_after?:number|null; can_restore?:boolean; notification_status?:string|null; notification_delivery_configured?:boolean;
   mode:'local'|'auth0'; configured:boolean; authenticated:boolean; verified?:boolean;
   user?:{id:string;email:string}; csrf?:string; idle_until?:number; absolute_until?:number;
 }
 export function privateAccess(status:SessionStatus|null):boolean {
-  return status?.authenticated===true && status.verified===true && !!status.user?.id && !!status.csrf
+  return (!status?.account_state||status.account_state==='active') && status?.authenticated===true && status.verified===true && !!status.user?.id && !!status.csrf
 }
 export function sessionDeadline(status:SessionStatus):number {
   const values=[status.idle_until,status.absolute_until]

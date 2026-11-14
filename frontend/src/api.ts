@@ -31,6 +31,7 @@ export async function storageRequest<T>(path: string, method = 'GET', payload?: 
       headers: {...(payload ? {'Content-Type':'application/json'} : {}),
         ...(method!=='GET' && sessionCsrf ? {'X-PDW-CSRF':sessionCsrf} : {})},
       body: payload ? JSON.stringify(payload) : undefined})
+    if (response.status===204 && response.ok) return undefined as T
     if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Check that the local backend is running.')
     const data = await response.json()
     if (!response.ok) {

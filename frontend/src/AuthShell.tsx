@@ -1,3 +1,4 @@
+import {AccountLifecycle} from './AccountLifecycle'
 import {useCallback,useEffect,useRef,useState} from 'react'
 import App from './App'
 import {setSessionContext,storageRequest,StorageRequestError} from './api'
@@ -28,6 +29,7 @@ export default function AuthShell() {
     const previous=stateRef.current
     if (previous?.authenticated && (!next.authenticated || previous.user?.id!==next.user?.id)) clearAddress()
     if (previous?.authenticated && previous.verified && !next.verified) clearAddress()
+    if (next.account_state==='pending_deletion') clearAddress()
     stateRef.current=next
     setSessionContext(next.mode==='auth0' && next.authenticated ? next.csrf || null : null)
     setStatus(next)
@@ -126,7 +128,10 @@ export default function AuthShell() {
       {status?.mode==='auth0' && status.configured && !status.authenticated && <details><summary>Forgot your password?</summary>
         <form onSubmit={event=>void resetPassword(event)}><label className="field"><span>Account email address</span><input type="email" required maxLength={320} value={email} onChange={e=>setEmail(e.target.value)}/></label>
           <button type="submit" disabled={busy}>Request password reset</button></form></details>}
+      {status?.authenticated && status.verified && <AccountLifecycle key={status.csrf} status={status} onClosed={message=>{
+        generation.current++;clearAddress();apply({mode:'auth0',configured:true,authenticated:false});setNotice(message);setError('')
+      }}/>}
     </section>
-    {status && <App key={workspaceIdentity(status)} storageAllowed={!!allowed} accountMode={status.mode}/>}
+    {status && status.account_state!=='pending_deletion' && <App key={workspaceIdentity(status)} storageAllowed={!!allowed} accountMode={status.mode}/>}
   </>
 }

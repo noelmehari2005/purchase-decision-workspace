@@ -32,3 +32,9 @@ test('expired or absent sessions offer sign-in while outages do not imply config
   for (const code of ['session_required','session_expired','session_revoked','fresh_auth_required']) assert.equal(requiresSignIn(code),true)
   for (const code of ['identity_unavailable','auth_unconfigured','storage_unavailable','']) assert.equal(requiresSignIn(code),false)
 })
+
+test('pending deletion closes private access even with a verified session',()=>{
+  assert.equal(privateAccess({...session,account_state:'pending_deletion',can_restore:true}),false)
+  assert.equal(workspaceIdentity({...session,account_state:'pending_deletion'}),'demo')
+  assert.equal(privateAccess({...session,account_state:'active'}),true)
+})

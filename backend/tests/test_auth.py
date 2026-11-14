@@ -116,10 +116,10 @@ class AuthApiTests(unittest.TestCase):
         self.source=MagicMock()
         self.source.config=AuthSettings('example.auth0.com','client','secret','machine','machine-secret')
         self.source.profile.side_effect=lambda subject:{'user_id':subject,'email':subject+'@example.com','email_verified':True}
-        def session(token):
+        def session(token,allow_pending=False):
             if token not in ('a','b','unverified'):raise StorageError(401,'session_required','Sign in first.')
             owner='owner-'+token
-            return {'csrf':'csrf-'+token,'owner_id':owner,'last_active':time.time(),'absolute_until':time.time()+86400}, \
+            return {'auth_time':time.time(),'csrf':'csrf-'+token,'owner_id':owner,'last_active':time.time(),'absolute_until':time.time()+86400}, \
                    {'_id':owner,'subject':'auth0|'+token,'email':token+'@example.com','email_verified':token!='unverified'}
         self.store.session.side_effect=session
         self.store.refresh_profile.side_effect=lambda user,profile,record:user

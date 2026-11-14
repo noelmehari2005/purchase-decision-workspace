@@ -18,6 +18,8 @@ class MongoRepository:
     def clean(document):
         if document is None:
             raise StorageError(404, 'not_found', 'This saved record was not found.')
+        if document.get('deleted') is True:
+            raise StorageError(404,'not_found','This saved workspace was deleted.')
         return {k: v for k, v in document.items() if k not in ('_id', 'owner_id')}
 
     def create(self, owner, request_id, state):
@@ -38,7 +40,7 @@ class MongoRepository:
         return self.clean(self.decisions.find_one({'_id': f'{owner}:{decision_id}', 'owner_id': owner}))
 
     def list(self, owner, offset, limit):
-        docs = self.decisions.find({'owner_id': owner}, {'state.title': 1, 'id': 1, 'revision': 1, 'updated_at': 1}).sort([('updated_at', -1), ('_id', -1)]).skip(offset).limit(limit)
+        docs = self.decisions.find({'owner_id': owner, 'deleted': {'$ne': True}}, {'state.title': 1, 'id': 1, 'revision': 1, 'updated_at': 1}).sort([('updated_at', -1), ('_id', -1)]).skip(offset).limit(limit)
         return [{'id': d['id'], 'title': d['state']['title'], 'revision': d['revision'], 'updated_at': d['updated_at']} for d in docs]
 
     def update(self, owner, decision_id, expected, state):
@@ -49,21 +51,27 @@ class MongoRepository:
         ensure_candidate_revisions(previous['state'], state)
         self.validate_import_evidence(owner, state)
         item = self.decisions.find_one_and_update(
-            {'_id': f'{owner}:{decision_id}', 'owner_id': owner, 'revision': expected},
+            {'_id': f'{owner}:{decision_id}', 'owner_id': owner, 'revision': expected, 'deleted': {'$ne': True}},
             {'$set': {'state': state, 'updated_at': now()}, '$inc': {'revision': 1}}, return_document=ReturnDocument.AFTER)
         if item is None:
             raise StorageError(409, 'revision_conflict', 'The workspace changed while saving. Your local edits were not overwritten.')
         return self.clean(item)
 
     def find_snapshot(self, owner, decision_id, snapshot_id):
+        self.get(owner,decision_id)
         doc = self.snapshots.find_one({'_id': f'{owner}:{decision_id}:{snapshot_id}', 'owner_id': owner, 'decision_id': decision_id})
         return self.clean(doc) if doc else None
 
     def save_snapshot(self, owner, snapshot):
+        self.get(owner,snapshot['decision_id'])
         from pymongo.errors import DuplicateKeyError
         item = {**snapshot, '_id': f"{owner}:{snapshot['decision_id']}:{snapshot['id']}", 'owner_id': owner}
         try:
             self.snapshots.insert_one(item)
+            try:self.get(owner,snapshot['decision_id'])
+            except StorageError:
+                self.snapshots.delete_one({'_id':item['_id'],'owner_id':owner})
+                raise
             return self.clean(item)
         except DuplicateKeyError:
             return self.find_snapshot(owner, snapshot['decision_id'], snapshot['id'])
@@ -124,11 +132,35 @@ class MongoRepository:
                 checked.append(evidence)
 
     def export_workspaces(self, owner, limit):
-        return self.decisions.find({'owner_id': owner}).sort('_id', 1).limit(limit).max_time_ms(5000)
+        return self.decisions.find({'owner_id': owner, 'deleted': {'$ne': True}}).sort('_id', 1).limit(limit).max_time_ms(5000)
 
     def export_reviews(self, owner, cutoff, limit):
         return self.snapshots.find({'owner_id': owner, 'created_at': {'$lte': cutoff}}).sort('_id', 1).limit(limit).max_time_ms(5000)
 
     def export_revisions(self, owner, limit):
-        rows = self.decisions.find({'owner_id': owner}, {'id': 1, 'revision': 1}).sort('_id', 1).limit(limit).max_time_ms(5000)
+        rows = self.decisions.find({'owner_id': owner, 'deleted': {'$ne': True}}, {'id': 1, 'revision': 1}).sort('_id', 1).limit(limit).max_time_ms(5000)
         return {row['id']: row['revision'] for row in rows}
+
+    def delete(self, owner, decision_id, expected):
+        from pymongo import ReturnDocument
+        row=self.decisions.find_one({'_id':f'{owner}:{decision_id}','owner_id':owner})
+        if not row:raise StorageError(404,'not_found','This workspace was not found.')
+        if row.get('deleted') is not True:
+            row=self.decisions.find_one_and_update({'_id':f'{owner}:{decision_id}','owner_id':owner,
+                'revision':expected,'deleted':{'$ne':True}},
+                {'$set':{'deleted':True,'deleted_at':now()},'$unset':{'state':''}},
+                return_document=ReturnDocument.AFTER)
+            if not row:raise StorageError(409,'revision_conflict','The workspace changed. Reopen and review it before deleting.')
+        self._cleanup_workspace(row)
+
+    def _cleanup_workspace(self, row):
+        self.database.deletion_ledger.update_one({'_id':'workspace:'+row['_id']},{'$setOnInsert':{
+            'kind':'workspace','owner_id':row['owner_id'],'decision_id':row['id'],'deleted_at':row['deleted_at']}},upsert=True)
+        self.snapshots.delete_many({'owner_id':row['owner_id'],'decision_id':row['id']})
+        self.decisions.update_one({'_id':row['_id'],'deleted':True},{'$set':{'cleanup_checked_at':now()}})
+
+    def cleanup_deleted_workspaces(self,limit=25):
+        count=0
+        for row in self.decisions.find({'deleted':True}).sort([('cleanup_checked_at',1),('_id',1)]).limit(limit):
+            self._cleanup_workspace(row);count+=1
+        return count

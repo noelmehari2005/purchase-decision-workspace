@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, Response
 
 from .repositories import MongoRepository
-from .workspaces import CreateWorkspace, UpdateWorkspace, CreateSnapshot, StorageError, build_snapshot
+from .workspaces import CreateWorkspace, UpdateWorkspace, CreateSnapshot, DeleteWorkspace, StorageError, build_snapshot
 
 router = APIRouter(prefix='/api/v1')
 LOCAL_OWNER = 'local-development-user'
@@ -83,6 +83,12 @@ def create_decision(payload: CreateWorkspace, owner=Depends(local_owner), repo=D
 @router.get('/decisions/{decision_id}')
 def get_decision(decision_id: UUID, owner=Depends(local_owner), repo=Depends(repository)):
     return safe_operation(lambda: repo.get(owner, str(decision_id)))
+
+
+@router.delete('/decisions/{decision_id}', status_code=204)
+def delete_decision(decision_id: UUID, payload: DeleteWorkspace, owner=Depends(local_owner), repo=Depends(repository)):
+    safe_operation(lambda: repo.delete(owner,str(decision_id),payload.expected_revision))
+    return Response(status_code=204)
 
 
 @router.patch('/decisions/{decision_id}')

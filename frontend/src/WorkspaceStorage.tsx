@@ -1,3 +1,4 @@
+import {DeleteWorkspace} from './DeleteWorkspace'
 import {ExportControls} from './ExportControls'
 import {SourceEvidence} from './ImportPanel'
 import {useEffect, useRef, useState} from 'react'
@@ -142,6 +143,7 @@ export function WorkspaceStorage({state,onLoad,onReady,onTitle,onTimezone,accoun
         <button type="button" disabled={busy || reviews.length<10} onClick={()=>setHistoryOffset(historyOffset+10)}>Older reviews</button></div>
     </details>}
     <ExportControls dirty={dirty}/>
+    {saved&&<DeleteWorkspace key={saved.id} saved={saved} disabled={busy}/>}
     {historical && <HistoricalReview snapshot={historical} onClose={()=>setHistorical(null)}/>}
     </fieldset>
   </section>
