@@ -4,8 +4,40 @@ import unittest
 from unittest.mock import patch
 
 import httpx
+from fastapi.testclient import TestClient
+from backend.app import main
 from backend.app.auth_provider import Auth0Provider,AuthSettings
 from backend.app.workspaces import StorageError
+
+
+class AccountStartupTests(unittest.TestCase):
+    def test_configured_provider_finishes_before_server_accepts_requests(self):
+        initialized=[]
+        def initialize():
+            initialized.append(True)
+        with patch.object(main,'auth_mode',return_value='auth0'), \
+                patch.object(main,'provider',side_effect=initialize) as setup:
+            with TestClient(main.app) as web:
+                self.assertEqual(initialized,[True])
+                self.assertEqual(web.get('/api/v1/health').status_code,200)
+            setup.assert_called_once_with()
+
+    def test_optional_account_setup_does_not_prevent_demo_startup(self):
+        for code in ('auth_unconfigured','auth_dependencies_missing'):
+            with self.subTest(code=code),patch.object(main,'auth_mode',return_value='auth0'), \
+                    patch.object(main,'provider',side_effect=StorageError(503,code,'Setup needed.')):
+                with TestClient(main.app) as web:
+                    self.assertEqual(web.get('/api/v1/health').status_code,200)
+
+    def test_local_mode_skips_provider_and_unexpected_errors_stop_startup(self):
+        with patch.object(main,'auth_mode',return_value='local'),patch.object(main,'provider') as setup:
+            with TestClient(main.app) as web:
+                self.assertEqual(web.get('/api/v1/health').status_code,200)
+            setup.assert_not_called()
+        with patch.object(main,'auth_mode',return_value='auth0'), \
+                patch.object(main,'provider',side_effect=RuntimeError('Initialization failed.')):
+            with self.assertRaisesRegex(RuntimeError,'Initialization failed'):
+                with TestClient(main.app):pass
 
 
 class ProviderRequestTests(unittest.TestCase):

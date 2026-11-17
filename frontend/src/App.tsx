@@ -22,6 +22,9 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles')
   const [restoring,setRestoring] = useState(storageAllowed && new URLSearchParams(window.location.search).has('decision'))
   const titleRef = useRef<HTMLHeadingElement>(null)
+  const addCandidateRef=useRef<HTMLButtonElement>(null)
+  const [focusCandidate,setFocusCandidate]=useState<string|null>(null)
+  useEffect(()=>{if(focusCandidate)setFocusCandidate(null)},[focusCandidate])
   const [tasks, setTasks] = useState(taskLabels.map((name, i) => ({name, selected: i < 4,
     timing: i === 3 ? 'upcoming' : 'current', experience: i === 2 ? 'struggles' : i === 3 ? 'unknown' : 'adequate'})))
   const [customNeeds, setCustomNeeds] = useState('')
@@ -66,6 +69,7 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
   const workspace: WorkspaceState = useMemo(()=>({schemaVersion:1, title, timezone, tasks, customNeeds, requirements, preferences, records, plan, outcome, reason}),
     [title,timezone,tasks,customNeeds,requirements,preferences,records,plan,outcome,reason])
   const loadWorkspace = useCallback((state: WorkspaceState)=>{
+    setFocusCandidate(null)
     setEditorEpoch(value=>value+1)
     setTitle(state.title); setTimezone(state.timezone); setTasks(state.tasks); setCustomNeeds(state.customNeeds)
     setRequirements(state.requirements); setPreferences(state.preferences); setRecords(state.records)
@@ -82,13 +86,14 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
       {...record, confirmed: {...record.draft}, revision: record.revision + 1} : record))
   }
   function editor(record: CandidateRecord) {
-    return <CandidateEditor key={`${editorEpoch}:${record.draft.id}`} record={record}
+    return <CandidateEditor key={`${editorEpoch}:${record.draft.id}`} record={record} focusName={focusCandidate===record.draft.id}
       onImport={storageAllowed ? (before,next)=>setRecords(current=>current.map(r=>
         r.draft.id===before.id && JSON.stringify(r.draft)===JSON.stringify(before) ? {...r,draft:next}:r)) : undefined}
       onEdit={(key, value) => editLaptop(record.draft.id, key, value)} onConfirm={() => confirmLaptop(record.draft.id)}
       onRemove={record.draft.current ? undefined : () => {
         setRecords(current => current.filter(r => r.draft.id !== record.draft.id))
         if (outcome === record.draft.id) setOutcome('Undecided')
+        requestAnimationFrame(()=>addCandidateRef.current?.focus())
       }} />
   }
   const requirementField = (key: 'ram' | 'storage' | 'ceiling', label: string) => <TextField label={label} numeric
@@ -179,7 +184,9 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
       {step === 2 && <><div className="notice">Add a laptop below, then import its specifications from Icecat or enter them manually. Review and confirm each draft before comparing.</div>
         {!storageAllowed && <p className="hint">Sign in with a verified email to use Icecat importing. Manual entry works in this demo.</p>}
         {records.filter(r => !r.draft.current).map(editor)}
-        <button type="button" className="secondary" disabled={records.length >= 20} onClick={() => setRecords([...records, {draft:newLaptop(crypto.randomUUID()), confirmed:null, revision:0}])}>+ Add another laptop</button>
+        <button ref={addCandidateRef} type="button" className="secondary" disabled={records.length >= 20} onClick={()=>{
+          const draft=newLaptop(crypto.randomUUID());setRecords([...records,{draft,confirmed:null,revision:0}]);setFocusCandidate(draft.id)
+        }}>+ Add another laptop</button>
         <p className="hint">{records.length - 1} replacement drafts · maximum 19 in this local workspace. Only confirmed revisions enter comparison.</p>
       </>}
       {step === 3 && <>

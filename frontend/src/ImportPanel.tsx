@@ -36,7 +36,7 @@ export function ImportPanel({draft,onApply}:{draft:LaptopDraft;onApply:(before:L
       <div className="table-scroll" role="region" tabIndex={0} aria-label={`Imported specifications for ${preview.evidence.brand} ${preview.evidence.mpn}`}><table><thead><tr><th>Specification</th><th>Icecat proposes</th><th>Your current entry</th></tr></thead><tbody>{specKeys.map(key=>{
         const field=preview.evidence.fields.find(f=>f.field===key)
         return <tr key={key}><th scope="row">{specLabels[key]}</th><td>{field?.normalized||'Unknown'}</td><td>{preview.before[key]||'Unknown'}
-          {sameProduct(preview.before,preview.evidence)&&(preview.before[key]||'')!==(field?.normalized||'')&&<label className="check"><input type="checkbox" checked={keep.includes(key)}
+          {sameProduct(preview.before,preview.evidence)&&(preview.before[key]||'')!==(field?.normalized||'')&&<label className="check"><input type="checkbox" aria-label={`Keep my ${specLabels[key]} entry`} checked={keep.includes(key)}
             onChange={e=>setKeep(current=>e.target.checked?[...current,key]:current.filter(k=>k!==key))}/>Keep my entry</label>}</td></tr>
       })}</tbody></table></div>
       {preview.evidence.issues.map(issue=><p className="hint" key={issue}>{issue}</p>)}

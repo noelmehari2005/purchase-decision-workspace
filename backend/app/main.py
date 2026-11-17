@@ -1,6 +1,7 @@
 """Local laptop decision API with Auth0 accounts and opt-in persistence. Reviewed Icecat imports."""
 
 from pathlib import Path
+from contextlib import asynccontextmanager
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -12,11 +13,30 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.concurrency import run_in_threadpool
 
+from .auth_provider import auth_mode, provider
 from .domain import Requirements, evaluate
 from .schemas import EvaluationInput, EvaluationOutput
+from .workspaces import StorageError
 
-app = FastAPI(title='Purchase Decision Workspace', version='0.6.0')
+
+@asynccontextmanager
+async def lifespan(_app):
+    # Import and register the configured SDK before accepting requests. A cold
+    # import can exceed the browser's session-check timeout; this makes the
+    # server's startup-complete message reflect that initialization too.
+    # Registration does not contact Auth0 or open account storage.
+    if auth_mode() != 'local':
+        try:
+            await run_in_threadpool(provider)
+        except StorageError as error:
+            if error.code not in ('auth_unconfigured', 'auth_dependencies_missing'):
+                raise
+    yield
+
+
+app = FastAPI(title='Purchase Decision Workspace', version='0.6.0', lifespan=lifespan)
 from .storage_api import install_storage
 install_storage(app)
 from .auth_api import install_auth
