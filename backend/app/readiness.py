@@ -19,6 +19,15 @@ def configuration_report(environ=None):
     auth_fields=('PDW_AUTH0_DOMAIN','PDW_AUTH0_CLIENT_ID','PDW_AUTH0_CLIENT_SECRET',
                  'PDW_AUTH0_MANAGEMENT_CLIENT_ID','PDW_AUTH0_MANAGEMENT_CLIENT_SECRET')
     auth_valid=bool(re.fullmatch(r'[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.auth0\.com',domain)) and (value('PDW_APP_ORIGIN') or 'http://127.0.0.1:5173') in ('http://127.0.0.1:5173','http://localhost:5173')
+    staging=value('PDW_RUNTIME')=='staging'
+    runtime_valid=False
+    if staging:
+        from .runtime import runtime
+        try:runtime(env);runtime_valid=True
+        except (ValueError,TypeError):pass
+        auth_fields=('PDW_AUTH0_DOMAIN','PDW_AUTH0_SPA_CLIENT_ID','PDW_AUTH0_API_AUDIENCE',
+                     'PDW_AUTH0_MANAGEMENT_CLIENT_ID','PDW_AUTH0_MANAGEMENT_CLIENT_SECRET')
+        auth_valid=runtime_valid and bool(re.fullmatch(r'[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.auth0\.com',domain))
     host,sender=value('PDW_SMTP_HOST'),value('PDW_SMTP_FROM')
     try:
         port=int(value('PDW_SMTP_PORT') or '465')
@@ -26,8 +35,8 @@ def configuration_report(environ=None):
                     '@' in parseaddr(sender)[1] and bool(value('PDW_SMTP_USERNAME'))==bool(value('PDW_SMTP_PASSWORD')))
     except (ValueError,TypeError):smtp_valid=False
     deletion_id=value('PDW_AUTH0_DELETION_CLIENT_ID')
-    deletion_valid=auth_valid and deletion_id not in {value('PDW_AUTH0_MANAGEMENT_CLIENT_ID'),value('PDW_AUTH0_CLIENT_ID')}
-    checks=[check('private_storage',value('PDW_LOCAL_STORAGE')=='1'),
+    deletion_valid=auth_valid and deletion_id not in {value('PDW_AUTH0_MANAGEMENT_CLIENT_ID'),value('PDW_AUTH0_CLIENT_ID'),value('PDW_AUTH0_SPA_CLIENT_ID')}
+    checks=[check('private_storage',bool(value('PDW_MONGO_URI')) if staging else value('PDW_LOCAL_STORAGE')=='1',runtime_valid if staging else True),
             check('email_password_auth',all(value(k) for k in auth_fields),auth_valid and value('PDW_AUTH_MODE') in ('','auth0')),
             check('icecat_imports',bool(value('PDW_ICECAT_USERNAME') or value('PDW_ICECAT_API_TOKEN'))),
             check('notification_smtp',bool(host and sender),smtp_valid),
@@ -35,7 +44,7 @@ def configuration_report(environ=None):
     return {'format':'pdw-readiness','version':1,'checks':checks,
         'verification':'Configuration presence is not a delivery, provider-permission, coverage or production test.',
         'release_ready':False,'release_blockers':[
-            'The current application supports loopback development only; public HTTPS configuration is not implemented.',
+            'Hosted HTTPS, cross-origin sign-in and approved-tester access require live verification before release.',
             'Live notification delivery and provider cleanup require separate verification.',
             'Maintenance needs a supervised scheduler with alerts.',
             'Backup expiration, isolated restoration, suppression replay and marker retention are not operationally verified.',

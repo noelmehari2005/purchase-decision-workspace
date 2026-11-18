@@ -8,7 +8,7 @@ export function DeleteWorkspace({saved,disabled}:{saved:SavedWorkspace;disabled:
     setBusy(true);setError('')
     try {
       await storageRequest<void>(`/decisions/${saved.id}`,'DELETE',{expected_revision:saved.revision,confirmation})
-      window.location.assign('/')
+      window.location.assign(window.location.pathname)
     } catch(err) {setError((err as Error).message);setBusy(false)}
   }
   return <details><summary>Delete this saved workspace</summary><p>Permanently delete <strong>{saved.state.title}</strong> and all its saved reviews. Other workspaces and your account are kept.</p>

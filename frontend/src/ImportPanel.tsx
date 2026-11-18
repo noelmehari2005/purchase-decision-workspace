@@ -8,7 +8,13 @@ export function ImportPanel({draft,onApply}:{draft:LaptopDraft;onApply:(before:L
   const [busy,setBusy]=useState(false),[error,setError]=useState('')
   const [preview,setPreview]=useState<{evidence:ImportEvidence;before:LaptopDraft}|null>(null),[keep,setKeep]=useState<SpecKey[]>([])
   const alive=useRef(true), requestId=useRef<{key:string;id:string}|null>(null)
+  const previewHeading=useRef<HTMLHeadingElement>(null),fetchButton=useRef<HTMLButtonElement>(null)
   useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[])
+  useEffect(()=>{if(preview)previewHeading.current?.focus()},[preview])
+  function closePreview() {
+    setPreview(null)
+    requestAnimationFrame(()=>fetchButton.current?.focus())
+  }
   async function fetchPreview() {
     if (busy) return
     setBusy(true);setError('');setPreview(null)
@@ -28,10 +34,10 @@ export function ImportPanel({draft,onApply}:{draft:LaptopDraft;onApply:(before:L
     {mode==='mpn'?<div className="field-grid"><label className="field"><span>Brand</span><input value={brand} maxLength={100} disabled={busy} onChange={e=>{setBrand(e.target.value);setPreview(null)}}/></label>
       <label className="field"><span>Exact manufacturer part number</span><input value={mpn} maxLength={200} disabled={busy} onChange={e=>{setMpn(e.target.value);setPreview(null)}} placeholder="Include regional suffix, if present"/></label></div>:
       <label className="field"><span>{mode==='link'?'Icecat product URL':'Icecat ID'}</span><input value={value} maxLength={2000} disabled={busy} onChange={e=>{setValue(e.target.value);setPreview(null)}}/></label>}
-    <button type="button" disabled={busy||(mode==='mpn'?!brand.trim()||!mpn.trim():!value.trim())} onClick={()=>void fetchPreview()}>{busy?'Fetching specifications…':'Fetch product for review'}</button>
+    <button ref={fetchButton} type="button" disabled={busy||(mode==='mpn'?!brand.trim()||!mpn.trim():!value.trim())} onClick={()=>void fetchPreview()}>{busy?'Fetching specifications…':'Fetch product for review'}</button>
     {busy&&<p role="status">Fetching one product. Your current laptop details are unchanged.</p>}
     {error&&<p className="error" role="alert">{error} You can fill in the fields below manually.</p>}
-    {preview&&<section className="import-preview" aria-label="Import review"><h4>Review {preview.evidence.brand} · {preview.evidence.mpn}</h4>
+    {preview&&<section className="import-preview" aria-label="Import review"><h4 ref={previewHeading} tabIndex={-1}>Review {preview.evidence.brand} · {preview.evidence.mpn}</h4>
       <p className="hint">Fetched {new Date(preview.evidence.retrieved_at).toLocaleString()} · English · Icecat ID {preview.evidence.product_id}</p>
       <div className="table-scroll" role="region" tabIndex={0} aria-label={`Imported specifications for ${preview.evidence.brand} ${preview.evidence.mpn}`}><table><thead><tr><th>Specification</th><th>Icecat proposes</th><th>Your current entry</th></tr></thead><tbody>{specKeys.map(key=>{
         const field=preview.evidence.fields.find(f=>f.field===key)
@@ -44,8 +50,8 @@ export function ImportPanel({draft,onApply}:{draft:LaptopDraft;onApply:(before:L
       <p>Apply to the editable draft, complete missing details, then use “Confirm reviewed laptop.” Your workspace is saved only when you click Save.</p>
       {stale&&<p role="alert" className="notice">The draft changed while this preview was open. Fetch again to review those changes together.</p>}
       <div className="button-row"><button type="button" className="primary" disabled={!!stale} onClick={()=>{
-        onApply(preview.before,applyImport(preview.before,preview.evidence,keep));setPreview(null);requestId.current=null
-      }}>Apply to draft</button><button type="button" onClick={()=>setPreview(null)}>Discard preview</button></div>
+        onApply(preview.before,applyImport(preview.before,preview.evidence,keep));closePreview();requestId.current=null
+      }}>Apply to draft</button><button type="button" onClick={closePreview}>Discard preview</button></div>
     </section>}
     <p className="hint">Only Icecat is fetched. Other product links can be references for manual entry. Save the workspace to keep your reviewed specifications and source details. Unsaved imports older than 30 days must be fetched again before saving.</p>
   </details>

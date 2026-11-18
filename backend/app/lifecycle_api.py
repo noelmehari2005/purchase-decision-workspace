@@ -19,7 +19,7 @@ class DeleteAccount(Contract):
 
 def actor(request,require_fresh=False):
     auth_api.allowed_origin(request)
-    if request.client and request.client.host not in ('127.0.0.1','::1','testclient'):
+    if not auth_api.runtime().hosted and request.client and request.client.host not in ('127.0.0.1','::1','testclient'):
         raise StorageError(403,'local_only','This milestone supports local development only.')
     if auth_mode()!='auth0':raise StorageError(403,'account_required','Account deletion requires a signed-in account.')
     record,user=auth_api.checked_session(request,auth_api.identity_store(),auth_api.provider(),allow_pending=True)
@@ -61,6 +61,8 @@ def restore(request:Request):
     source=auth_api.provider()
     token=auth_api.identity_store().create_session(source.config.issuer,user['subject'],user['email'],True,
         record['auth_time'],password_changed_at=changed)
+    if auth_api.runtime().hosted:
+        return JSONResponse({**result,'session_token':token})
     response=JSONResponse(result)
     response.set_cookie(auth_api.SESSION_COOKIE,token,max_age=86400,httponly=True,samesite='lax',secure=source.config.secure,path='/')
     return response

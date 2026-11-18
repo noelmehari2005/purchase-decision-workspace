@@ -24,6 +24,21 @@ The Python lock records the installed and tested dependency versions, including 
 
 ## Start the app
 
+### If iCloud offloads the Python environment
+
+On November 17, backend startup again waited on dependency-file reads before printing startup messages. Several `.venv` files were marked `dataless`; an import diagnostic captured Python waiting in `get_data` while loading a FastAPI dependency. Keeping a development environment outside synced Documents avoids depending on on-demand downloads of these package files.
+
+Stop the pending backend with Control-C, then create a fresh environment outside Documents using the existing Python interpreter. Run these commands yourself in Terminal; the coding session cannot write to this home-directory location:
+
+```sh
+cd /Users/noelmehari/Documents/Portfolio/purchase-decision-workspace
+.venv/bin/python -m venv "$HOME/.venvs/purchase-decision-workspace"
+"$HOME/.venvs/purchase-decision-workspace/bin/python" -m pip install -r backend/requirements.lock.txt
+"$HOME/.venvs/purchase-decision-workspace/bin/python" -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
+
+The repository, ignored `backend/.env`, Docker volume and saved records stay in place. The old `.venv` is not deleted. Use the new interpreter path for subsequent backend, email-check and test commands. Installation needs package-registry access. Do not copy or move an existing virtual environment: recreate it from the lockfile. If source files or frontend packages are also offloaded, keep the project downloaded in Finder; relocating only Python packages does not address those files.
+
 Start MongoDB once from the repository root, with Docker Desktop open:
 
 ```sh

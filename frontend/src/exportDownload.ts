@@ -1,7 +1,8 @@
 /** A download is created only after the request succeeds for the same open account. */
 import {StorageRequestError} from './api.ts'
+import {apiUrl,transport} from './deployment.ts'
 export async function downloadSavedExport(signal:AbortSignal, active:()=>boolean):Promise<void> {
-  const response=await fetch('/api/v1/account/export',{signal,cache:'no-store',credentials:'same-origin'})
+  const response=await fetch(apiUrl('/account/export'),{signal,cache:'no-store',...transport()})
   if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('The export service did not return JSON. Check that the backend is running.')
   if (!response.ok) {
     const body=await response.json()

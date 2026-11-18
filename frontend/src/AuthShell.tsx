@@ -1,4 +1,5 @@
 import {AccountLifecycle} from './AccountLifecycle'
+import {setBearer} from './deployment'
 import {useCallback,useEffect,useRef,useState} from 'react'
 import App from './App'
 import {setSessionContext,storageRequest,StorageRequestError} from './api'
@@ -15,7 +16,7 @@ function clearAddress() {
   url.searchParams.delete('decision');url.searchParams.delete('auth_error')
   window.history.replaceState(null,'',url)
 }
-export default function AuthShell() {
+export default function AuthShell({hosted}:{hosted?:{login:(signup?:boolean)=>void;logout:()=>void}}={}) {
   const [status,setStatus]=useState<SessionStatus|null>(null)
   const [error,setError]=useState('')
   const [notice,setNotice]=useState(new URLSearchParams(window.location.search).has('auth_error')?'Sign-in did not complete. Please try again.':'')
@@ -30,6 +31,7 @@ export default function AuthShell() {
     if (previous?.authenticated && (!next.authenticated || previous.user?.id!==next.user?.id)) clearAddress()
     if (previous?.authenticated && previous.verified && !next.verified) clearAddress()
     if (next.account_state==='pending_deletion') clearAddress()
+    if (!next.authenticated) setBearer(null)
     stateRef.current=next
     setSessionContext(next.mode==='auth0' && next.authenticated ? next.csrf || null : null)
     setStatus(next)
@@ -50,6 +52,9 @@ export default function AuthShell() {
       }
       if (err instanceof StorageRequestError && requiresSignIn(err.code)) {
         clearAddress();apply({mode:'auth0',configured:true,authenticated:false})
+        if (!current?.authenticated) setNotice(err.message)
+        setError('')
+        return
       }
       setError((err as Error).message)
     } finally {loading.current=false}
@@ -99,6 +104,7 @@ export default function AuthShell() {
       await storageRequest('/auth/logout','POST',{})
       generation.current++;clearAddress();apply({mode:'auth0',configured:true,authenticated:false})
       setNotice('Signed out. Saved workspaces remain in your account; unsaved changes were cleared.')
+      hosted?.logout()
     } catch(err) {setError((err as Error).message)} finally {setBusy(false)}
   }
   async function resetPassword(event:React.FormEvent) {
@@ -118,8 +124,8 @@ export default function AuthShell() {
         <div className="button-row">{status?.authenticated ? <>
           {!status.verified && <button type="button" onClick={()=>void refresh()}>I’ve verified my email</button>}
           <button type="button" disabled={busy} onClick={()=>void logout()}>Sign out</button>
-        </> : status?.mode==='auth0' && <><a className="account-link" aria-disabled={!status.configured} href={status.configured?loginPath():undefined}>Sign in</a>
-          <a className="account-link" aria-disabled={!status.configured} href={status.configured?loginPath(true):undefined}>Create account</a></>}</div>
+        </> : status?.mode==='auth0' && <>{hosted?<><button disabled={!status.configured} onClick={()=>hosted.login()}>Sign in</button><button disabled={!status.configured} onClick={()=>hosted.login(true)}>Create account</button></>:<><a className="account-link" aria-disabled={!status.configured} href={status.configured?loginPath():undefined}>Sign in</a>
+          <a className="account-link" aria-disabled={!status.configured} href={status.configured?loginPath(true):undefined}>Create account</a></>}</>}</div>
       </div>
       {status?.mode==='auth0' && !status.configured && <p className="hint">Email/password sign-in is being connected. The fictional demo is available now.</p>}
       {!status && !error && <p role="status">Checking your session…</p>}
@@ -128,7 +134,7 @@ export default function AuthShell() {
       {status?.mode==='auth0' && status.configured && !status.authenticated && <details><summary>Forgot your password?</summary>
         <form onSubmit={event=>void resetPassword(event)}><label className="field"><span>Account email address</span><input type="email" required maxLength={320} value={email} onChange={e=>setEmail(e.target.value)}/></label>
           <button type="submit" disabled={busy}>Request password reset</button></form></details>}
-      {status?.authenticated && status.verified && <AccountLifecycle key={status.csrf} status={status} onClosed={message=>{
+      {status?.authenticated && status.verified && <AccountLifecycle key={status.csrf} status={status} onReauthenticate={hosted?()=>hosted.login():undefined} onRestored={hosted?()=>void refresh():undefined} onClosed={message=>{
         generation.current++;clearAddress();apply({mode:'auth0',configured:true,authenticated:false});setNotice(message);setError('')
       }}/>}
     </section>

@@ -1,0 +1,60 @@
+name: Publish controlled staging to Pages
+
+# Manual publication only. Configure Auth0/Render/Atlas before dispatching.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-staging
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      VITE_PDW_RUNTIME: staging
+      VITE_PDW_BASE_PATH: /purchase-decision-workspace/
+      VITE_PDW_API_ORIGIN: ${{ vars.PDW_API_ORIGIN }}
+      VITE_PDW_AUTH0_DOMAIN: ${{ vars.PDW_AUTH0_DOMAIN }}
+      VITE_PDW_AUTH0_CLIENT_ID: ${{ vars.PDW_AUTH0_SPA_CLIENT_ID }}
+      VITE_PDW_AUTH0_AUDIENCE: ${{ vars.PDW_AUTH0_API_AUDIENCE }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Validate public staging settings
+        run: >-
+          node --input-type=module -e
+          "import {parseDeployment} from './src/deployment.ts';
+          parseDeployment(process.env,'https://noelmehari2005.github.io',process.env.VITE_PDW_BASE_PATH);"
+      - run: npm test
+      - run: npm run build -- --mode staging
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: frontend/dist
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - id: publish
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5

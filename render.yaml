@@ -1,0 +1,40 @@
+# Controlled sample-data staging only. Creating a Blueprint is a separate action.
+services:
+  - type: web
+    name: pdw-staging-api
+    runtime: python
+    plan: free
+    region: virginia
+    autoDeployTrigger: "off"
+    buildCommand: pip install -r backend/requirements.lock.txt
+    startCommand: python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.1
+      - key: PDW_RUNTIME
+        value: staging
+      - key: PDW_AUTH_MODE
+        value: auth0
+      - key: PDW_LOCAL_STORAGE
+        value: "0"
+      - key: PDW_APP_ORIGIN
+        value: https://noelmehari2005.github.io
+      - key: PDW_APP_BASE_PATH
+        value: /purchase-decision-workspace/
+      - key: PDW_MONGO_URI
+        sync: false
+      - key: PDW_MONGO_DATABASE
+        value: pdw_staging
+      - key: PDW_AUTH0_DOMAIN
+        sync: false
+      - key: PDW_AUTH0_SPA_CLIENT_ID
+        sync: false
+      - key: PDW_AUTH0_API_AUDIENCE
+        sync: false
+      - key: PDW_AUTH0_MANAGEMENT_CLIENT_ID
+        sync: false
+      - key: PDW_AUTH0_MANAGEMENT_CLIENT_SECRET
+        sync: false
+      - key: PDW_TESTER_EMAILS
+        sync: false

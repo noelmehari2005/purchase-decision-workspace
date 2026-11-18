@@ -1,8 +1,9 @@
 import {useRef,useState} from 'react'
 import {storageRequest,StorageRequestError} from './api'
+import {setBearer} from './deployment'
 import type {SessionStatus} from './session'
 
-export function AccountLifecycle({status,onClosed}:{status:SessionStatus;onClosed:(message:string)=>void}) {
+export function AccountLifecycle({status,onClosed,onReauthenticate,onRestored}:{status:SessionStatus;onClosed:(message:string)=>void;onReauthenticate?:()=>void;onRestored?:()=>void}) {
   const [confirmation,setConfirmation]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[reauth,setReauth]=useState(false)
   const requestId=useRef(crypto.randomUUID())
   const pending=status.account_state==='pending_deletion'
@@ -11,8 +12,11 @@ export function AccountLifecycle({status,onClosed}:{status:SessionStatus;onClose
     setBusy(true);setError('');setReauth(false)
     try {
       if(restore) {
-        await storageRequest('/account/restore','POST',{})
-        window.location.assign('/')
+        const result=await storageRequest<{session_token?:string}>('/account/restore','POST',{})
+        if(onRestored) {
+          if(!result.session_token)throw new Error('Sign in again to reopen your restored account.')
+          setBearer(result.session_token);onRestored()
+        } else window.location.assign('/')
       } else {
         const result=await storageRequest<{delete_after:number;notification_status:string}>('/account/deletion-request','POST',
           {request_id:requestId.current,confirmation})
@@ -27,7 +31,7 @@ export function AccountLifecycle({status,onClosed}:{status:SessionStatus;onClose
     {status.can_restore?<button type="button" className="primary" disabled={busy} onClick={()=>void run(true)}>{busy?'Restoring…':'Restore account'}</button>:
       <p>The recovery window has ended. Your account cannot be restored.</p>}
     <p className="hint">Notification status: {status.notification_status==='sent'?'Sent':status.notification_status==='sending'?'Sending':'Queued; delivery not confirmed'}.</p>
-    {error&&<p className="error" role="alert">{error}</p>}{reauth&&<a href="/api/v1/auth/login">Sign in again to continue</a>}
+    {error&&<p className="error" role="alert">{error}</p>}{reauth&&<>{onReauthenticate?<button onClick={onReauthenticate}>Sign in again to continue</button>:<a href="/api/v1/auth/login">Sign in again to continue</a>}</>}
   </section>
   return <details className="account-deletion"><summary>Delete account</summary>
     <p>Start a 30-day recovery window for this account and all its saved workspaces and reviews. You will be signed out. Your data stays unavailable unless you sign in and explicitly restore the account before the deadline.</p>
@@ -35,6 +39,6 @@ export function AccountLifecycle({status,onClosed}:{status:SessionStatus;onClose
     {!status.notification_delivery_configured&&<p className="notice">Email delivery is not configured in this local build. A deletion notice will be queued, but will not be sent until delivery is configured and the maintenance job runs.</p>}
     <label className="field"><span>Type DELETE MY ACCOUNT to continue</span><input value={confirmation} maxLength={40} autoComplete="off" onChange={e=>setConfirmation(e.target.value)}/></label>
     <button className="danger" type="button" disabled={busy||confirmation!=='DELETE MY ACCOUNT'} onClick={()=>void run()}>{busy?'Requesting deletion…':'Start account deletion'}</button>
-    {error&&<p className="error" role="alert">{error}</p>}{reauth&&<a href="/api/v1/auth/login">Sign in again to continue</a>}
+    {error&&<p className="error" role="alert">{error}</p>}{reauth&&<>{onReauthenticate?<button onClick={onReauthenticate}>Sign in again to continue</button>:<a href="/api/v1/auth/login">Sign in again to continue</a>}</>}
   </details>
 }

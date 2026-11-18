@@ -23,3 +23,7 @@ button.danger {background: #8a3131; color: #fff; border-color: #8a3131}
 h1,h2,h3,h4 {overflow-wrap:anywhere}
 .section-heading>div {min-width:0;max-width:100%}
 .account-panel .hint {overflow-wrap:anywhere}
+
+/* Keep editable boundaries distinct on white and pale form surfaces. */
+:root {--control-border:#7b8c80}
+.field input,.field select,.field textarea {border-color:var(--control-border)}

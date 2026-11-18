@@ -143,6 +143,28 @@ class AuthApiTests(unittest.TestCase):
         result=self.client.get('/api/v1/decisions')
         self.assertEqual(result.status_code,401)
         self.assertEqual(self.repo.list('local-development-user',0,20),[])
+    def test_rejected_session_cookie_is_cleared_without_allowing_private_access(self):
+        for code in ('session_required','session_expired','session_revoked'):
+            with self.subTest(code=code):
+                self.client.cookies.clear()
+                # Model a host cookie rather than httpx's domainless test cookie.
+                self.client.cookies.set(auth_api.SESSION_COOKIE,'a',domain='testserver.local',path='/')
+                self.store.session.side_effect=StorageError(401,code,'Sign in again.')
+                result=self.client.get('/api/v1/auth/session')
+                self.assertEqual(result.status_code,401)
+                self.assertEqual(result.json()['code'],code)
+                self.assertIn('Max-Age=0',result.headers['set-cookie'])
+                self.assertNotIn('user',result.json())
+                next_result=self.client.get('/api/v1/auth/session')
+                self.assertEqual(next_result.status_code,200)
+                self.assertFalse(next_result.json()['authenticated'])
+                self.assertEqual(self.client.get('/api/v1/decisions').status_code,401)
+    def test_session_provider_outage_does_not_clear_cookie_or_report_signed_out_success(self):
+        self.authenticate()
+        self.source.profile.side_effect=StorageError(503,'identity_unavailable','Unavailable')
+        result=self.client.get('/api/v1/auth/session')
+        self.assertEqual(result.status_code,503)
+        self.assertNotIn('set-cookie',result.headers)
     def test_unverified_email_cannot_access_saved_workspaces(self):
         self.authenticate('unverified')
         self.assertEqual(self.client.get('/api/v1/decisions').status_code,403)

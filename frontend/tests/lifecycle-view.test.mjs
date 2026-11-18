@@ -13,7 +13,7 @@ mkdirSync(folder,{recursive:true})
 const output=new URL(`lifecycle-${randomUUID()}.mjs`,folder)
 const source=readFileSync(new URL('../src/AccountLifecycle.tsx',import.meta.url),'utf8')
 const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText
-writeFileSync(output,compiled.replace("from './api'","from '../src/api.ts'"))
+writeFileSync(output,compiled.replace("from './api'","from '../src/api.ts'").replace("from './deployment'","from '../src/deployment.ts'"))
 let AccountLifecycle
 try {({AccountLifecycle}=await import(output.href))} finally {unlinkSync(fileURLToPath(output))}
 const session={mode:'auth0',configured:true,authenticated:true,verified:true,account_state:'pending_deletion',delete_after:2000000000,can_restore:true,notification_status:'queued'}

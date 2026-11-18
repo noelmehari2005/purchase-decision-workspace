@@ -13,6 +13,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.cors import CORSMiddleware
+from .runtime import runtime
 from starlette.concurrency import run_in_threadpool
 
 from .auth_provider import auth_mode, provider
@@ -45,7 +47,11 @@ from .import_api import router as import_router
 app.include_router(import_router)
 from .lifecycle_api import router as lifecycle_router
 app.include_router(lifecycle_router)
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', 'testserver'])
+deployment=runtime()
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=[deployment.api_host] if deployment.hosted else ['localhost', '127.0.0.1', 'testserver'])
+if deployment.hosted:
+    app.add_middleware(CORSMiddleware,allow_origins=[deployment.origin],allow_credentials=False,
+        allow_methods=['GET','POST','PUT','PATCH','DELETE'],allow_headers=['Authorization','Content-Type','X-PDW-CSRF'])
 
 
 @app.exception_handler(RequestValidationError)
@@ -60,7 +66,7 @@ async def validation_error(_request: Request, error: RequestValidationError):
 
 @app.get('/api/v1/health')
 def health():
-    return {'status': 'ok', 'mode': 'local-stateless'}
+    return {'status': 'ok', 'mode': 'controlled-staging' if deployment.hosted else 'local-stateless'}
 
 
 @app.post('/api/v1/evaluations', response_model=EvaluationOutput)

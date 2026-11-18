@@ -35,13 +35,17 @@ def auth_mode():
 
 
 def settings():
+    from .runtime import runtime
+    deployed=runtime()
     domain=os.environ.get('PDW_AUTH0_DOMAIN','').strip()
     origin=os.environ.get('PDW_APP_ORIGIN','http://127.0.0.1:5173').rstrip('/')
     # This milestone deliberately supports local development, with a fixed provider destination.
-    if origin not in ('http://127.0.0.1:5173','http://localhost:5173') or not re.fullmatch(r'[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.auth0\.com',domain):
+    if (not deployed.hosted and origin not in ('http://127.0.0.1:5173','http://localhost:5173')) or not re.fullmatch(r'[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.auth0\.com',domain):
         raise StorageError(503,'auth_unconfigured','Email/password sign-in is waiting for local Auth0 setup.')
     values=[os.environ.get(k,'').strip() for k in ('PDW_AUTH0_CLIENT_ID','PDW_AUTH0_CLIENT_SECRET',
         'PDW_AUTH0_MANAGEMENT_CLIENT_ID','PDW_AUTH0_MANAGEMENT_CLIENT_SECRET')]
+    if deployed.hosted:
+        values[:2]=[deployed.spa_client,'unused-public-spa']
     if not all(values):
         raise StorageError(503,'auth_unconfigured','Email/password sign-in is waiting for local Auth0 setup.')
     return AuthSettings(domain,*values,connection=os.environ.get('PDW_AUTH0_CONNECTION','Username-Password-Authentication'),origin=origin)

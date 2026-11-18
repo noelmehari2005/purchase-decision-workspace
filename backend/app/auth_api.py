@@ -16,10 +16,39 @@ from .auth_provider import auth_mode,provider,settings
 from .identity import IdentityStore,IDLE_SECONDS
 from .schemas import Contract
 from .workspaces import StorageError
+from .runtime import runtime,session_token,check_tester
 
 SESSION_COOKIE='pdw_session'
 FLOW_COOKIE='pdw_login'
 router=APIRouter(prefix='/api/v1/auth')
+
+
+class SpaSession(Contract):
+    id_token:Annotated[str,Field(min_length=1,max_length=16384)]
+
+
+@router.post('/spa-session')
+def spa_session(request:Request,payload:SpaSession):
+    config=runtime()
+    if not config.hosted:
+        raise StorageError(404,'not_found','This sign-in method is unavailable.')
+    if request.headers.get('origin')!=config.origin:
+        raise StorageError(403,'invalid_origin','Use the test application to sign in.')
+    value=request.headers.get('authorization','')
+    if not value.startswith('Bearer ') or len(value)>16400:
+        raise StorageError(401,'signin_invalid','Sign in again.')
+    source=provider()
+    store=identity_store()
+    store.rate_limit('spa-login:'+request.client.host,20,600)
+    from .spa_auth import verifier
+    subject,authenticated=verifier(source.config.issuer,config.spa_client,config.audience).verify(value[7:],payload.id_token)
+    profile=source.profile(subject)
+    if profile.get('user_id')!=subject or profile.get('blocked') is True:
+        raise StorageError(403,'account_restricted','This account cannot sign in.')
+    check_tester(profile)
+    token=store.create_session(source.config.issuer,subject,profile['email'],True,authenticated,
+        password_changed_at=profile.get('last_password_reset'))
+    return {'session_token':token}
 
 
 @lru_cache(maxsize=1)
@@ -46,8 +75,9 @@ def csrf_check(request,session):
 def checked_session(request,store,source,allow_pending=False):
     from pymongo.errors import PyMongoError
     try:
-        record,user=store.session(request.cookies.get(SESSION_COOKIE),allow_pending=True) if allow_pending else store.session(request.cookies.get(SESSION_COOKIE))
+        record,user=store.session(session_token(request),allow_pending=True) if allow_pending else store.session(session_token(request))
         user=store.refresh_profile(user,source.profile(user['subject']),record)
+        check_tester(user)
         return record,user
     except PyMongoError as error:
         raise StorageError(503,'identity_unavailable','Cannot verify your session right now. Saved records are unchanged.') from error
@@ -55,7 +85,7 @@ def checked_session(request,store,source,allow_pending=False):
 
 def current_owner(request:Request):
     allowed_origin(request)
-    if request.client and request.client.host not in ('127.0.0.1','::1','testclient'):
+    if not runtime().hosted and request.client and request.client.host not in ('127.0.0.1','::1','testclient'):
         raise StorageError(403,'local_only','This milestone supports local development only.')
     if auth_mode()=='local':
         # Explicit legacy test mode, never an automatic fallback on auth failure.
@@ -78,8 +108,16 @@ def session_status(request:Request):
     except StorageError as error:
         if error.code in ('auth_unconfigured','auth_dependencies_missing'):return {'mode':'auth0','configured':False,'authenticated':False}
         raise
-    if not request.cookies.get(SESSION_COOKIE):return {'mode':'auth0','configured':True,'authenticated':False}
-    record,user=checked_session(request,identity_store(),source,allow_pending=True)
+    if not session_token(request):return {'mode':'auth0','configured':True,'authenticated':False}
+    try:
+        record,user=checked_session(request,identity_store(),source,allow_pending=True)
+    except StorageError as error:
+        if error.status!=401:raise
+        # A stale cookie must not keep every poll in the rejected-session path.
+        # Keep the denial response; the next check can use the public demo state.
+        response=JSONResponse(status_code=401,content={'code':error.code,'message':error.message,'field_errors':[]})
+        response.delete_cookie(SESSION_COOKIE,path='/',httponly=True,samesite='lax')
+        return response
     from .lifecycle import status as lifecycle_status
     return {**lifecycle_status(user),'notification_delivery_configured':bool(os.environ.get('PDW_SMTP_HOST') and os.environ.get('PDW_SMTP_FROM')),'mode':'auth0','configured':True,'authenticated':True,'verified':user['email_verified'],
         'user':{'id':user['_id'],'email':user['email']},'csrf':record['csrf'],
@@ -139,7 +177,7 @@ async def callback(request:Request):
 def activity(request:Request):
     record,_user=checked_session(request,identity_store(),provider(),allow_pending=True)
     csrf_check(request,record)
-    identity_store().touch(request.cookies.get(SESSION_COOKIE))
+    identity_store().touch(session_token(request))
     return {'idle_until':min(time.time()+IDLE_SECONDS,record['absolute_until'])}
 
 
@@ -147,7 +185,7 @@ def activity(request:Request):
 def logout(request:Request):
     allowed_origin(request)
     store=identity_store()
-    token=request.cookies.get(SESSION_COOKIE)
+    token=session_token(request)
     try:record,_=store.session(token,allow_pending=True)
     except StorageError as error:
         if error.status not in (401,403):raise
@@ -201,6 +239,8 @@ def install_auth(app):
             # Reject browser cross-origin access before any local-mode dependency override.
             if path.startswith('/api/v1/') and path!='/api/v1/auth/callback':allowed_origin(request)
             if flow_path:
+                if runtime().hosted:
+                    raise StorageError(404,'browser_signin_required','Use the test app’s Sign in button.')
                 source=provider()
                 store=identity_store()
                 if path.endswith('/callback'):

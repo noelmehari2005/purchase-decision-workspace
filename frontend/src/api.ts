@@ -1,7 +1,9 @@
 import type { Evaluation } from './model'
+import {apiUrl,transport,deployment} from './deployment.ts'
 
 export async function requestEvaluation(payload: unknown, signal: AbortSignal): Promise<Evaluation> {
-  const response = await fetch('/api/v1/evaluations', {
+  const response = await fetch(apiUrl('/evaluations'), {
+    credentials:transport().credentials,
     method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload), signal,
   })
   if (!response.headers.get('content-type')?.includes('application/json'))
@@ -25,17 +27,18 @@ export class StorageRequestError extends Error {
 }
 export async function storageRequest<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 12_000)
+  const timeout = setTimeout(() => controller.abort(), deployment().hosted?90_000:12_000)
   try {
-    const response = await fetch(`/api/v1${path}`, {method, signal:controller.signal,
-      headers: {...(payload ? {'Content-Type':'application/json'} : {}),
+    const options=transport()
+    const response = await fetch(apiUrl(path), {method, signal:controller.signal,credentials:options.credentials,
+      headers: {...options.headers,...(payload ? {'Content-Type':'application/json'} : {}),
         ...(method!=='GET' && sessionCsrf ? {'X-PDW-CSRF':sessionCsrf} : {})},
       body: payload ? JSON.stringify(payload) : undefined})
     if (response.status===204 && response.ok) return undefined as T
     if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Check that the local backend is running.')
     const data = await response.json()
     if (!response.ok) {
-      if (response.status===401 || data.code==='email_unverified' || data.code==='account_restricted')
+      if (path!=='/auth/session' && (response.status===401 || data.code==='email_unverified' || data.code==='account_restricted' || data.code==='tester_required'))
         window.dispatchEvent(new Event('pdw-auth-required'))
       throw new StorageRequestError(data.field_errors?.length ?
       data.field_errors.map((e: {path:string;message:string})=>`${e.path}: ${e.message}`).join(' ') : data.message || 'Storage request failed.', data.code)

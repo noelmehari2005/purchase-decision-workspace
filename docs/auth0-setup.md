@@ -18,6 +18,8 @@ Save Changes. Use the same `127.0.0.1` hostname when opening the app; do not mix
 
 ## Account status checks
 
+For this project’s existing tenant, the owner confirmed the read-only client currently appears as **Machine to Machine Applications**. Identify it by its Auth0 Management API grant with **read:users only**; the suggested display name below is not a requirement. The separate Workspace Cleanup app and staging API Test Application are different clients.
+
 Create a separate **Machine to Machine Application**, named Purchase Decision Account Checks. Authorize **Auth0 Management API**, with only the **read:users** permission. Do not grant create/update/delete-user permissions. This server-only integration checks current email verification, blocked status, and last password reset before allowing private workspace operations. It does not receive budget data. It avoids needing a public webhook/tunnel for this local milestone.
 
 This also means a provider/database outage or quota error closes private access rather than trusting stale account status. It adds provider calls to authenticated activity/session/workspace requests; quotas and a production strategy must be measured before deployment. Management access tokens are cached briefly in backend memory, not returned to the browser or saved in workspace documents.

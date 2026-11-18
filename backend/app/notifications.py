@@ -7,10 +7,11 @@ import secrets
 import smtplib
 import ssl
 import time
+import certifi
 from .workspaces import StorageError
 
 
-def smtp_send(recipient,requested_at,deadline):
+def send_message(recipient,subject,body):
     host=os.environ.get('PDW_SMTP_HOST','').strip()
     sender=os.environ.get('PDW_SMTP_FROM','').strip()
     if not host or not sender:
@@ -19,26 +20,37 @@ def smtp_send(recipient,requested_at,deadline):
         if '\r' in address or '\n' in address or '@' not in parseaddr(address)[1]:
             raise ValueError('Invalid mail address')
     port=int(os.environ.get('PDW_SMTP_PORT','465'))
+    message=EmailMessage();message['From']=sender;message['To']=recipient
+    message['Subject']=subject
+    message.set_content(body)
+    # Python installations on macOS may have no default OpenSSL CA paths.
+    # Use the pinned Mozilla bundle while retaining chain/hostname validation.
+    context=ssl.create_default_context(cafile=certifi.where())
+    implicit_tls=port in (465,2465)
+    connection=smtplib.SMTP_SSL(host,port,timeout=10,context=context) if implicit_tls else smtplib.SMTP(host,port,timeout=10)
+    with connection as client:
+        if not implicit_tls:client.starttls(context=context)
+        username=os.environ.get('PDW_SMTP_USERNAME','')
+        if username:client.login(username,os.environ.get('PDW_SMTP_PASSWORD',''))
+        refused=client.send_message(message)
+        if refused:raise smtplib.SMTPRecipientsRefused(refused)
+
+
+def smtp_send(recipient,requested_at,deadline):
+    from .runtime import runtime
+    config=runtime()
     origin=os.environ.get('PDW_APP_ORIGIN','http://127.0.0.1:5173')
-    if origin not in ('http://127.0.0.1:5173','http://localhost:5173'):
+    if not config.hosted and origin not in ('http://127.0.0.1:5173','http://localhost:5173'):
         raise ValueError('Unsupported app origin')
     date=lambda stamp:datetime.fromtimestamp(stamp,timezone.utc).strftime('%B %d, %Y at %H:%M UTC')
-    message=EmailMessage();message['From']=sender;message['To']=recipient
-    message['Subject']='Purchase Decision Workspace: account deletion requested'
-    message.set_content(f'Account deletion was requested on {date(requested_at)}.\n\n'
+    send_message(recipient,'Purchase Decision Workspace: account deletion requested',
+        f'Account deletion was requested on {date(requested_at)}.\n\n'
         f'You can recover your saved data by signing in and explicitly choosing Restore account before {date(deadline)}. '
         'Signing in alone does not cancel deletion. After that deadline, recovery is no longer available.\n\n'
         'After active deletion, older system backups may remain for up to a further 30 days under the backup-retention policy. Backups are not a user recovery option.\n\n'
-        f'Open Purchase Decision Workspace: {origin}/\n\n'
+        f'Open Purchase Decision Workspace: {config.app_url}\n\n'
         'If you already restored your account, no further action is needed. '
         'If you did not request deletion, sign in, restore the account, and reset your password.\n')
-    context=ssl.create_default_context()
-    connection=smtplib.SMTP_SSL(host,port,timeout=10,context=context) if port==465 else smtplib.SMTP(host,port,timeout=10)
-    with connection as client:
-        if port!=465:client.starttls(context=context)
-        username=os.environ.get('PDW_SMTP_USERNAME','')
-        if username:client.login(username,os.environ.get('PDW_SMTP_PASSWORD',''))
-        if client.send_message(message):raise RuntimeError('Recipient refused')
 
 
 def deliver_pending(database,send=smtp_send,limit=25,clock=None,progress=None):

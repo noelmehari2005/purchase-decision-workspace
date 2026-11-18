@@ -3,6 +3,7 @@ import {SourceEvidence} from './ImportPanel'
 import { CandidateEditor, PlanSummary, TextField } from './components'
 import { requestEvaluation } from './api'
 import { WorkspaceStorage } from './WorkspaceStorage'
+import {deployment} from './deployment'
 import { evaluationInput, initialRecords, money, newLaptop } from './model'
 import type { CandidateRecord, CandidateResult, Evaluation, Group, Importance, LaptopDraft, PlanForm, RequirementForm, WorkspaceState } from './model'
 
@@ -139,7 +140,7 @@ function App({storageAllowed=true,accountMode='local'}:{storageAllowed?:boolean;
   return <div className="app-shell">
     <a className="skip-link" href="#workspace">Skip to workspace</a>
     <header className="app-header"><a className="brand" href="#workspace"><span className="brand-mark" aria-hidden="true">P</span>
-      <span>Purchase Decision<br /><strong>Workspace</strong></span></a><span className="local-label"><span aria-hidden="true" />Local prototype · USD</span></header>
+      <span>Purchase Decision<br /><strong>Workspace</strong></span></a><span className="local-label"><span aria-hidden="true" />{deployment().hosted?'Test deployment':'Local prototype'} · USD</span></header>
     <div className="workspace-layout"><aside className="sidebar"><p className="eyebrow">Your laptop decision</p>
       <nav aria-label="Decision steps">{steps.map((label, index) => <button key={label} type="button" aria-current={index === step ? 'step' : undefined} onClick={() => goTo(index)}>
         <span className="step-number" aria-hidden="true">{index + 1}</span>{label}</button>)}</nav>

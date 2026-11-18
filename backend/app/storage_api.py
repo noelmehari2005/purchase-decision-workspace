@@ -29,7 +29,8 @@ def configured_repository():
 
 
 def repository():
-    if os.environ.get('PDW_LOCAL_STORAGE') != '1':
+    from .runtime import runtime
+    if not runtime().hosted and os.environ.get('PDW_LOCAL_STORAGE') != '1':
         raise StorageError(503, 'storage_disabled', 'Local saved workspaces are not enabled. Your current tab still works.')
     try:
         return configured_repository()
