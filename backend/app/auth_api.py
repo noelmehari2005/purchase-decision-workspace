@@ -37,18 +37,41 @@ def spa_session(request:Request,payload:SpaSession):
     value=request.headers.get('authorization','')
     if not value.startswith('Bearer ') or len(value)>16400:
         raise StorageError(401,'signin_invalid','Sign in again.')
-    source=provider()
-    store=identity_store()
-    store.rate_limit('spa-login:'+request.client.host,20,600)
-    from .spa_auth import verifier
-    subject,authenticated=verifier(source.config.issuer,config.spa_client,config.audience).verify(value[7:],payload.id_token)
-    profile=source.profile(subject)
-    if profile.get('user_id')!=subject or profile.get('blocked') is True:
-        raise StorageError(403,'account_restricted','This account cannot sign in.')
-    check_tester(profile)
-    token=store.create_session(source.config.issuer,subject,profile['email'],True,authenticated,
-        password_changed_at=profile.get('last_password_reset'))
-    return {'session_token':token}
+    stage='provider_configuration'
+    try:
+        source=provider()
+        stage='account_storage'
+        store=identity_store()
+        stage='request_limit'
+        store.rate_limit('spa-login:'+request.client.host,20,600)
+        stage='token_validation'
+        from .spa_auth import verifier
+        subject,authenticated=verifier(source.config.issuer,config.spa_client,config.audience).verify(value[7:],payload.id_token)
+        stage='account_profile'
+        profile=source.profile(subject)
+        if profile.get('user_id')!=subject or profile.get('blocked') is True:
+            raise StorageError(403,'account_restricted','This account cannot sign in.')
+        stage='tester_access'
+        check_tester(profile)
+        stage='application_session'
+        token=store.create_session(source.config.issuer,subject,profile['email'],True,authenticated,
+            password_changed_at=profile.get('last_password_reset'))
+        return {'session_token':token}
+    except Exception as error:
+        cause=error
+        for _ in range(3):
+            if cause.__cause__ is None:break
+            cause=cause.__cause__
+        status=getattr(getattr(cause,'response',None),'status_code',None)
+        database_code=getattr(cause,'code',None)
+        # Only fixed stage labels, exception class names and numeric codes.
+        # Exception messages/args can include connection URIs or provider data.
+        logging.getLogger('pdw.auth').warning(
+            'Hosted sign-in failed: stage=%s type=%s provider_status=%s database_code=%s',
+            stage,type(cause).__name__,status if type(status) is int else None,
+            database_code if type(database_code) is int else None)
+        if isinstance(error,StorageError):raise
+        raise StorageError(503,'identity_unavailable','Cannot complete sign-in right now. Please try again.') from error
 
 
 @lru_cache(maxsize=1)

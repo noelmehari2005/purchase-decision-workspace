@@ -137,6 +137,42 @@ class StagingApiTests(unittest.TestCase):
         self.assertNotIn('access-control-allow-credentials',result.headers)
         self.verifier.verify.assert_called_once_with('signed-access','signed-id')
 
+    def test_database_failure_logs_stage_and_numeric_code_without_credentials(self):
+        from pymongo.errors import OperationFailure
+        private='mongodb+srv://private-user:private-password@host/ signed-access signed-id'
+        self.store.create_session.side_effect=OperationFailure(private,code=18)
+        with self.assertLogs('pdw.auth',level='WARNING') as captured:
+            result=self.web.post('/api/v1/auth/spa-session',headers=self.headers,json={'id_token':'signed-id'})
+        self.assertEqual(result.status_code,503)
+        output=' '.join(captured.output)+result.text
+        self.assertIn('stage=application_session',output)
+        self.assertIn('database_code=18',output)
+        for value in ('private-user','private-password','signed-access','signed-id'):
+            self.assertNotIn(value,output)
+
+    def test_wrapped_storage_and_provider_failures_keep_distinct_redacted_stages(self):
+        import httpx
+        from backend.app import auth_api
+        from pymongo.errors import OperationFailure
+        database_error=StorageError(503,'identity_unavailable','Cannot reach account storage.')
+        database_error.__cause__=OperationFailure('private-database-password',code=18)
+        with patch.object(auth_api,'identity_store',side_effect=database_error),self.assertLogs('pdw.auth',level='WARNING') as captured:
+            result=self.web.post('/api/v1/auth/spa-session',headers=self.headers,json={'id_token':'signed-id'})
+        self.assertEqual(result.status_code,503)
+        self.assertIn('stage=account_storage',' '.join(captured.output))
+        self.assertIn('database_code=18',' '.join(captured.output))
+        self.assertNotIn('private-database-password',' '.join(captured.output)+result.text)
+        request=httpx.Request('GET','https://example.auth0.com/api/v2/users/test')
+        error=StorageError(503,'identity_unavailable','Unable to verify your account.')
+        error.__cause__=httpx.HTTPStatusError('private-provider-secret',request=request,response=httpx.Response(401,request=request))
+        self.source.profile.side_effect=error
+        with self.assertLogs('pdw.auth',level='WARNING') as captured:
+            result=self.web.post('/api/v1/auth/spa-session',headers=self.headers,json={'id_token':'signed-id'})
+        self.assertEqual(result.status_code,503)
+        self.assertIn('stage=account_profile',' '.join(captured.output))
+        self.assertIn('provider_status=401',' '.join(captured.output))
+        self.assertNotIn('private-provider-secret',' '.join(captured.output)+result.text)
+
     def test_unknown_tester_and_blocked_profile_cannot_create_session(self):
         for profile in ({'email':'other@example.com','email_verified':True},{'email':'test@example.com','email_verified':False},
                         {'email':'test@example.com','email_verified':True,'blocked':True}):

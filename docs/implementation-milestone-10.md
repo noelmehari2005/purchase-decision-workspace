@@ -36,3 +36,17 @@ The owner supplied screenshots of the manual Render form: the correct repository
 ## Final local checks before GitHub push
 
 After the owner downloaded the offloaded files again, the backend regression discovered 183 tests: 149 passed and 34 opt-in MongoDB integration cases were skipped. All 29 frontend tests and the production build passed. Staged credential-pattern review found only the synthetic placeholder MongoDB URI in a test fixture; real backend/.env and frontend/.env.staging remain ignored and excluded. The owner reported entering the Render environment values; those secrets were not shared or inspected. The read-only M2M client display name was confirmed as Machine to Machine Applications, with read:users. Hosted deployment, Atlas network access and live hosted verification remain pending.
+
+## First hosted API observation
+
+The owner pushed commit 75257d8 and reported the Render service Live at https://purchase-decision-workspace.onrender.com. A read-only Chrome visit to /api/v1/health returned status ok, mode controlled-staging. The frontend’s ignored staging settings now use that confirmed API origin. The root URL serves no frontend route by design. This verifies API startup/HTTPS reachability only, not Atlas connectivity, Auth0 token exchange, SMTP or scheduled work. Pages publication and Atlas outbound-range allowlisting remain pending.
+
+## First hosted browser sign-in diagnosis
+
+The owner supplied a successful Pages build/publish screenshot for commit 75257d8 and reported adding Render’s two outbound ranges to Atlas. Hosted login then showed the generic provider error. A fresh browser attempt reproduced an Auth0 invalid_request redirect stating that the staging SPA was not authorized for the custom staging API. Read-only Auth0 inspection confirmed RS256, the intended custom audience, Per-app authorization and “No per-app authorization grant” for the SPA’s User-Delegated Access. The exact panel was opened for the owner to grant that app access; no provider grants or security settings were changed by the coding session. Database-backed hosted sign-in and saves remain unverified. The setup guide now includes the previously omitted per-app grant step.
+
+## Hosted session exchange failure
+
+The owner granted the staging SPA User-Delegated Access. Read-only inspection showed a saved grant (Revoke Access action/Grant ID), and a fresh attempt reached the normal Auth0 login form. After the owner signed in, the frontend session exchange returned HTTP 503. Render logs confirmed the OPTIONS preflight was 200 and POST /auth/spa-session was 503. Atlas inspection confirmed both Render CIDRs Active and the app user restricted to readWrite on pdw_staging with one-cluster access; no settings were changed.
+
+Added redacted bootstrap diagnostics naming the fixed failing stage, exception class and numeric provider/database code only. Exception messages, credentials, URIs, identities and token bodies are not logged. Unexpected bootstrap dependency errors now receive a sanitized 503 rather than an unhandled response. Thirteen targeted hosted-auth tests passed, including credential/token redaction, wrapped database authentication failures and provider HTTP failures. The actual failing dependency is still unconfirmed until this diagnostic change is deployed.
