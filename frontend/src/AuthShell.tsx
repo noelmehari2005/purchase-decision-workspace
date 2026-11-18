@@ -46,6 +46,9 @@ export default function AuthShell({hosted}:{hosted?:{login:(signup?:boolean)=>vo
     } catch(err) {
       if (version!==generation.current) return
       const current=stateRef.current
+      // A restored credential is untrusted until this initial check succeeds.
+      // Clear it on any failure, including provider outages or account denial.
+      if (!current?.authenticated) setBearer(null)
       if (current?.authenticated) {
         clearAddress();apply({mode:'auth0',configured:current.configured,authenticated:false})
         setNotice('Your private workspace was closed. Saved records are unchanged; unsaved edits were cleared. Sign in to reopen your work.')

@@ -1,4 +1,5 @@
 /** Public build settings only. Credentials must never be VITE_* variables. */
+import {readHostedSession,writeHostedSession} from './hostedSession.ts'
 export type Deployment={hosted:boolean;apiOrigin:string;domain:string;clientId:string;audience:string;returnTo:string}
 export function parseDeployment(env:Record<string,string>,origin:string,base:string):Deployment {
   if (!env.VITE_PDW_RUNTIME || env.VITE_PDW_RUNTIME==='local')
@@ -19,7 +20,14 @@ export function deployment():Deployment {
   return parseDeployment(env,typeof window==='undefined'?'':window.location?.origin || '',env.BASE_URL || '/')
 }
 let bearer:string|null=null
-export function setBearer(value:string|null) {bearer=value}
+const tabStorage=()=>typeof window==='undefined'?null:window.sessionStorage
+export function storedBearer():string|null {
+  return readHostedSession(deployment(),tabStorage,typeof window==='undefined'?'':window.location.search)
+}
+export function setBearer(value:string|null) {
+  bearer=value
+  writeHostedSession(deployment(),tabStorage,value)
+}
 export function apiUrl(path:string) {return deployment().apiOrigin+'/api/v1'+path}
 export function transport():{credentials:RequestCredentials;headers:Record<string,string>} {
   return {credentials:deployment().hosted?'omit':'same-origin',headers:bearer?{Authorization:'Bearer '+bearer}:{}}

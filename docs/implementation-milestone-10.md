@@ -2,6 +2,8 @@
 
 Status: in progress; not published, not production-ready. Free services only. The owner prefers GitHub Pages, selected controlled sign-in/sample workspaces and deferred independent usability testing.
 
+November 18 update: controlled staging is deployed. The owner subsequently confirmed working sign-in, Icecat imports and saved workspaces reopening after a refresh plus sign-in. The chronological entries below describe earlier preparation and failures, not current service availability. Refresh session continuity is now addressed separately in [milestone 11](implementation-milestone-11.md); hosted account checks, scheduled maintenance and backups remain outstanding. This is not a production-readiness claim.
+
 ## Implemented
 
 - Explicit local/staging runtime. Staging requires HTTPS origins, a separate named TLS-enabled Atlas SRV connection, Auth0 SPA/API configuration and verified tester email allowlisting. It cannot enable local demo ownership. Local defaults remain available.
@@ -50,3 +52,5 @@ The owner supplied a successful Pages build/publish screenshot for commit 75257d
 The owner granted the staging SPA User-Delegated Access. Read-only inspection showed a saved grant (Revoke Access action/Grant ID), and a fresh attempt reached the normal Auth0 login form. After the owner signed in, the frontend session exchange returned HTTP 503. Render logs confirmed the OPTIONS preflight was 200 and POST /auth/spa-session was 503. Atlas inspection confirmed both Render CIDRs Active and the app user restricted to readWrite on pdw_staging with one-cluster access; no settings were changed.
 
 Added redacted bootstrap diagnostics naming the fixed failing stage, exception class and numeric provider/database code only. Exception messages, credentials, URIs, identities and token bodies are not logged. Unexpected bootstrap dependency errors now receive a sanitized 503 rather than an unhandled response. Thirteen targeted hosted-auth tests passed, including credential/token redaction, wrapped database authentication failures and provider HTTP failures. The actual failing dependency is still unconfirmed until this diagnostic change is deployed.
+
+The owner deployed a770681 and repeated sign-in. Render’s diagnostic identified stage=account_storage, type=InvalidURI, with no provider/database numeric code. This establishes a malformed PDW_MONGO_URI before database connectivity, rather than a confirmed password-authentication or IP-list failure. The owner is being guided to rebuild the URI from Atlas and percent-encode the original password privately. No connection string, password or Render secret value was inspected or logged by the coding session.
