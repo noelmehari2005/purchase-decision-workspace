@@ -159,8 +159,10 @@ class MongoRepository:
         self.snapshots.delete_many({'owner_id':row['owner_id'],'decision_id':row['id']})
         self.decisions.update_one({'_id':row['_id'],'deleted':True},{'$set':{'cleanup_checked_at':now()}})
 
-    def cleanup_deleted_workspaces(self,limit=25):
+    def cleanup_deleted_workspaces(self,limit=25,progress=None,should_continue=None):
         count=0
-        for row in self.decisions.find({'deleted':True}).sort([('cleanup_checked_at',1),('_id',1)]).limit(limit):
+        for row in self.decisions.find({'deleted':True}).sort([('cleanup_checked_at',1),('_id',1)]).limit(limit).max_time_ms(5000):
+            if should_continue and not should_continue():break
+            if progress:progress()
             self._cleanup_workspace(row);count+=1
         return count

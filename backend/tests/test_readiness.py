@@ -57,6 +57,7 @@ class HeartbeatTests(unittest.TestCase):
         from backend.app import maintenance
         for fail in (False,True):
             db=MagicMock()
+            db.maintenance_locks.update_one.return_value.matched_count=1
             with patch.object(maintenance,'deliver_pending',return_value={'sent':0,'retry_pending':0}), \
                  patch.object(maintenance,'AccountLifecycle') as lifecycle, \
                  patch('backend.app.repositories.MongoRepository') as repository:

@@ -53,11 +53,13 @@ def smtp_send(recipient,requested_at,deadline):
         'If you did not request deletion, sign in, restore the account, and reset your password.\n')
 
 
-def deliver_pending(database,send=smtp_send,limit=25,clock=None,progress=None):
+def deliver_pending(database,send=smtp_send,limit=25,clock=None,progress=None,should_continue=None):
     from pymongo import ReturnDocument
     stamp=time.time() if clock is None else clock
     counts={'sent':0,'retry_pending':0}
     for _ in range(limit):
+        if should_continue and not should_continue():break
+        if progress:progress()
         lease=secrets.token_hex(16)
         user=database.users.find_one_and_update({'state':'pending_deletion','delete_after':{'$gt':stamp},
             'deletion_notice.next_attempt':{'$lte':stamp},'$or':[

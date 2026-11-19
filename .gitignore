@@ -12,3 +12,6 @@ test-results/
 playwright-report/
 *.log
 *.tsbuildinfo
+.dev.vars
+.dev.vars.*
+.wrangler/

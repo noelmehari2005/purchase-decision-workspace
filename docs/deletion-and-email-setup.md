@@ -92,9 +92,11 @@ Restart the backend after changing its environment. For a read-only configuratio
 
 Maintenance is a separate operator command:
 
+For configuration/database diagnostics without processing users, use `--run-once --mode check` (the CLI now defaults to check). `--mode notify` sends queued notices only. The explicit cleanup command below can permanently delete due records. Hosted signed scheduling is prepared separately in [scheduled maintenance setup](scheduled-maintenance-setup.md); activation and live checks remain outstanding.
+
 ```sh
 cd /Users/noelmehari/Documents/Portfolio/purchase-decision-workspace
-.venv/bin/python -m backend.app.maintenance --run-once
+.venv/bin/python -m backend.app.maintenance --run-once --mode cleanup
 ```
 
 **This command applies real due deletions to the configured database.** It is not a preview. It sends queued notices, claims accounts whose recovery deadline has passed, removes their associated local records, attempts provider cleanup, and repeats workspace-child cleanup. No 30-day wait is shortened by this command. Ordinary frontend access does not run the worker.

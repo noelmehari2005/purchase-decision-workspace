@@ -38,3 +38,8 @@ services:
         sync: false
       - key: PDW_TESTER_EMAILS
         sync: false
+      # Opt-in signed scheduler: keep disabled until the check-only rollout.
+      - key: PDW_MAINTENANCE_ENABLED
+        value: "0"
+      - key: PDW_MAINTENANCE_MODE
+        value: check

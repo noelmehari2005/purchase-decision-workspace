@@ -64,13 +64,15 @@ class AccountLifecycle:
         self.sessions.delete_many({'owner_id':user['_id'],'lifecycle_version':user.get('lifecycle_version')})
         return {'restored':True,'message':'Deletion cancelled. Your saved workspaces are available again.'}
 
-    def purge_due(self,delete_identity,limit=25,clock=None,progress=None):
+    def purge_due(self,delete_identity,limit=25,clock=None,progress=None,should_continue=None):
         from pymongo import ReturnDocument
         stamp=time.time() if clock is None else clock
         counts={'completed':0,'retry_pending':0}
         candidates=self.users.find({'$or':[{'state':'pending_deletion','delete_after':{'$lte':stamp}},
-                                         {'state':'purging'}]}).limit(limit)
+                                         {'state':'purging'}]}).limit(limit).max_time_ms(5000)
         for original in candidates:
+            if should_continue and not should_continue():break
+            if progress:progress()
             owner=original['_id']
             # Restore succeeds only before this atomic transition and deadline.
             lease=secrets.token_hex(16)
@@ -85,12 +87,14 @@ class AccountLifecycle:
                     'kind':'account','owner_id':owner,'delete_after':user['delete_after'],
                     'requested_at':user['delete_requested_at']}},upsert=True)
                 for name in ('decisions','snapshots','import_receipts','import_limits','app_sessions'):
+                    if progress:progress()
                     self.database[name].delete_many({'owner_id':owner})
                 # Store this once: retries must not move the backup deadline.
                 self.ledger.update_one({'_id':'account:'+owner,'active_purged_at':{'$exists':False}},
                     {'$set':{'active_purged_at':stamp,'backup_removal_due':stamp+RECOVERY_SECONDS}})
                 self.users.update_one({'_id':owner,'state':'purging','purge_lease':lease},
                     {'$unset':{'email':'','email_verified':'','deletion_notice':''}})
+                if progress:progress()
                 delete_identity(user['subject'])
                 # Keep only a suppression marker, never an email/provider identity.
                 self.users.replace_one({'_id':owner,'state':'purging','deletion_id':user['deletion_id'],'purge_lease':lease},
