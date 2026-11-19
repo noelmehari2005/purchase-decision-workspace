@@ -26,7 +26,7 @@ def authorize(request):
         raise StorageError(404,'not_found','This endpoint is unavailable.')
     secret=os.environ.get('PDW_MAINTENANCE_SECRET','')
     mode=os.environ.get('PDW_MAINTENANCE_MODE','check')
-    if not re.fullmatch(r'[0-9a-f]{64}',secret) or mode not in ('check','notify','cleanup'):
+    if not re.fullmatch(r'[0-9a-f]{64}',secret) or mode not in ('check','email-test','notify','cleanup'):
         raise StorageError(503,'maintenance_unconfigured','Maintenance configuration is incomplete.')
     stamp=request.headers.get('x-pdw-timestamp','')
     nonce=request.headers.get('x-pdw-nonce','')

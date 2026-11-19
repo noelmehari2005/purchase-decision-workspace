@@ -22,6 +22,7 @@ The server chooses its operating mode; callers cannot select a more privileged m
 | `PDW_MAINTENANCE_MODE` | Behavior |
 | --- | --- |
 | `check` (default) | Reports configuration presence and aggregate database/job diagnostics. Writes only scheduler control metadata, not user/workspace data. No SMTP, Auth0 deletion or cleanup. |
+| `email-test` | One synthetic email attempt per explicit test ID to the server-configured owner inbox. No queued notices or account/workspace processing. See the email setup guide. |
 | `notify` | Processes queued deletion-notice email only. No account or workspace purges. |
 | `cleanup` | Processes notices, accounts past their existing recovery deadlines, deleted-workspace children and expired transient records. Can permanently delete due data and Auth0 identities. |
 

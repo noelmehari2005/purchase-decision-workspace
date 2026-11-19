@@ -87,6 +87,11 @@ class TriggerTests(unittest.TestCase):
         self.assertEqual(first.status_code,200);self.assertEqual(second.status_code,409)
         self.assertEqual(second.json()['code'],'maintenance_replay');self.run.assert_called_once()
 
+    def test_email_test_mode_remains_server_selected(self):
+        with patch.dict(os.environ,{'PDW_MAINTENANCE_MODE':'email-test'}):
+            self.assertEqual(self.client.post(api.PATH,headers=signed_headers(),json={'mode':'cleanup'}).status_code,200)
+        self.assertEqual(self.run.call_args.kwargs['mode'],'email-test')
+
     def test_failure_response_and_logs_exclude_private_details(self):
         self.run.side_effect=RuntimeError('SECRET database-uri person@example.com')
         with self.assertLogs('pdw.maintenance',level='WARNING') as logs:

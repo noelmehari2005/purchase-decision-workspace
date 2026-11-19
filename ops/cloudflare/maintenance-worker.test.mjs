@@ -62,3 +62,10 @@ test('redirect responses stop without following or sending a signature elsewhere
     assert.equal(count,redirectPhase==='health'?1:2)
   }
 })
+test('email test logs only the allowed delivery summary',async()=>{
+  let count=0
+  const result=await triggerMaintenance(env,{fetchImpl:async()=>Response.json(++count===1?{status:'ok'}:
+    {status:'ok',mode:'email-test',delivery:'accepted',recipient:'PRIVATE',password:'PRIVATE'})})
+  assert.deepEqual(result,{status:'ok',mode:'email-test',delivery:'accepted'})
+  assert.ok(!JSON.stringify(result).includes('PRIVATE'))
+})

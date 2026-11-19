@@ -7,6 +7,13 @@ from pathlib import Path
 from .notifications import send_message
 
 
+def send_test_message(recipient):
+    send_message(recipient,'Purchase Decision Workspace: email delivery test',
+        'This is a requested email-delivery test for Purchase Decision Workspace.\n\n'
+        'No account deletion was requested by this test. No saved workspaces or account settings were changed.\n\n'
+        'If you can read this message, delivery to this inbox succeeded.\n')
+
+
 def delivery_error(error):
     # Classify failures without echoing server text, addresses or credentials.
     code=getattr(error,'smtp_code',None)
@@ -43,10 +50,7 @@ def main(argv=None):
     parser.add_argument('--to',required=True,help='Your own inbox; Resend testing requires the Resend account email.')
     args=parser.parse_args(argv)
     try:
-        send_message(args.to,'Purchase Decision Workspace: email delivery test',
-            'This is a requested email-delivery test for Purchase Decision Workspace.\n\n'
-            'No account deletion was requested by this test. No saved workspaces or account settings were changed.\n\n'
-            'If you can read this message, delivery to this inbox succeeded.\n')
+        send_test_message(args.to)
     except Exception as error:
         # Provider exceptions may contain credentials or private recipient data.
         print('Test delivery failed — '+delivery_error(error)+' No account data was changed.')

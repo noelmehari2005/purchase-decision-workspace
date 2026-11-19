@@ -30,7 +30,8 @@ export async function triggerMaintenance(env,{fetchImpl=(...args)=>globalThis.fe
     if(!response.ok)throw new Error()
     const result=await response.json()
     if(!['ok','busy'].includes(result.status))throw new Error()
-    return {status:result.status,mode:result.mode}
+    return {status:result.status,mode:result.mode,
+      ...(result.mode==='email-test'&&['accepted','already_attempted'].includes(result.delivery)?{delivery:result.delivery}:{})}
   } catch(error) {
     // Fetch errors can include destinations/headers. Only a fixed error reaches logs.
     const cause=String(error?.message||'').includes('Illegal invocation')?'binding':
@@ -42,7 +43,7 @@ export async function triggerMaintenance(env,{fetchImpl=(...args)=>globalThis.fe
 export default {
   async scheduled(_controller,env,context) {
     context.waitUntil(triggerMaintenance(env).then(result=>{
-      console.log(JSON.stringify({event:'pdw-maintenance',status:result.status,mode:result.mode}))
+      console.log(JSON.stringify({event:'pdw-maintenance',...result}))
     }))
   },
   fetch() {return new Response('Not found',{status:404})},

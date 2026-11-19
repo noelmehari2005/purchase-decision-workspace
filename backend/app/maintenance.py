@@ -20,7 +20,7 @@ def run(database,delete_user=delete_identity,send=None,*,mode='cleanup',limit=25
     import time
     from uuid import uuid4
     from .maintenance_lease import MaintenanceLease
-    if mode not in ('check','notify','cleanup') or type(limit) is not int or not 1<=limit<=25 or not 1<=budget_seconds<=60:
+    if mode not in ('check','email-test','notify','cleanup') or type(limit) is not int or not 1<=limit<=25 or not 1<=budget_seconds<=60:
         raise ValueError('Invalid maintenance bounds or mode.')
     lease=MaintenanceLease(database)
     if not lease.acquire():return {'status':'busy','mode':mode}
@@ -37,6 +37,13 @@ def run(database,delete_user=delete_identity,send=None,*,mode='cleanup',limit=25
         database.system_status.update_one({'_id':status_id},{'$set':{'run_id':run_id,'started_at':time.time(),
             'finished_at':None,'heartbeat_at':time.time(),'phase':'starting','status':'running','mode':mode}},upsert=True)
         tick('configuration')
+        if mode=='email-test':
+            from .hosted_email_check import run as email_test
+            result=email_test(database)
+            tick('finished')
+            database.system_status.update_one({'_id':status_id,'run_id':run_id},
+                {'$set':{'finished_at':time.time(),'status':'ok','delivery':result['delivery']}})
+            return result
         if mode=='check':
             from .readiness import configuration_report,database_report
             result={'status':'ok','mode':mode,'configuration':configuration_report()['checks'],
@@ -80,7 +87,7 @@ def run(database,delete_user=delete_identity,send=None,*,mode='cleanup',limit=25
 def main():
     parser=argparse.ArgumentParser(description='Process due deletion notices and irreversible deletions.')
     parser.add_argument('--run-once',action='store_true',required=True)
-    parser.add_argument('--mode',choices=('check','notify','cleanup'),default='check',help='Start with check; cleanup can irreversibly purge due accounts.')
+    parser.add_argument('--mode',choices=('check','email-test','notify','cleanup'),default='check',help='Start with check; cleanup can irreversibly purge due accounts.')
     args=parser.parse_args()
     try:
         result=run(configured_repository().database,mode=args.mode)
