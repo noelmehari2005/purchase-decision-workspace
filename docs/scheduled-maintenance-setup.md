@@ -1,6 +1,15 @@
 # Controlled staging maintenance scheduler
 
-Status: prepared locally on November 18, 2026; not published, enabled or live-verified. Free services only. Backups/restore and independent testing remain separate release work.
+Status: check-only scheduling deployed and verified November 18, 2026. Render is running commit `5f6e012`; Cloudflare Worker `pdw-staging-maintenance` is enabled with the owner-approved minute trigger. No notification or cleanup mode is enabled. Backups/restore and independent testing remain separate release work.
+
+## Hosted check evidence
+
+- The owner privately saved the same independent signing secret in Render and an encrypted Cloudflare binding. Its value was not read or recorded. Render's non-secret flags were inspected: `PDW_MAINTENANCE_ENABLED=1`, `PDW_MAINTENANCE_MODE=check`.
+- Public workers.dev and preview URLs are disabled. The production origin points to the staging Render API, with `PDW_SCHEDULE_ENABLED=1` after explicit owner activation approval. Cloudflare shows Workers Free.
+- Actual scheduled runs on November 18 at 22:48:37 and 22:49:38 Pacific returned `event=pdw-maintenance`, `status=ok`, `mode=check`. The latter invocation reported `outcome=ok`, CPU time 1 ms and wall time 1,596 ms. This verifies the scheduled caller, signature acceptance and completed backend check; it is not evidence of mail delivery, account deletion or backup readiness.
+- Initial scheduled attempts failed before any HTTP request because Workers rejects Fetch's `redirect: 'error'` option. The deployed source now uses `manual` and rejects non-2xx responses without following redirects. Regression coverage includes both health and signed-POST redirect responses. Safe failure diagnostics expose only a fixed phase, numeric HTTP status and a fixed cause category.
+- Final verified Worker revision: `d5b030ae-58c4-4a95-aebf-ce6733704947`. Seven Node tests pass, including signing, destination restrictions, redirects, global fetch binding and sanitized failures.
+- Cold-start recovery after a true Render sleep, hosted simultaneous/busy runs, independent failure alerts, SMTP delivery and backup/restore remain unverified. Local MongoDB tests cover lease contention and replay; check-only success does not refresh the full-cleanup heartbeat.
 
 ## What is prepared
 
