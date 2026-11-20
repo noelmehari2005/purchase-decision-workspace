@@ -8,7 +8,8 @@
   "triggers": {"crons": ["* * * * *"]},
   "vars": {
     "PDW_API_ORIGIN": "https://purchase-decision-workspace.onrender.com",
-    "PDW_SCHEDULE_ENABLED": "0"
+    "PDW_SCHEDULE_ENABLED": "0",
+    "PDW_MONITOR_EXPECTED_MODE": "check"
   },
   "observability": {"enabled": true}
 }

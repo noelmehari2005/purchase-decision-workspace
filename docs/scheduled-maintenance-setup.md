@@ -1,6 +1,14 @@
 # Controlled staging maintenance scheduler
 
-Status: check-only scheduling deployed and verified November 18, 2026. Render is running commit `5f6e012`; Cloudflare Worker `pdw-staging-maintenance` is enabled with the owner-approved minute trigger. No notification or cleanup mode is enabled. Backups/restore and independent testing remain separate release work.
+Status: check-only scheduling deployed and verified November 18–19, 2026. Render is running commit `af157a4`; Cloudflare Worker `pdw-staging-maintenance` is enabled with the owner-approved minute trigger. A synthetic hosted email reached the owner's inbox on November 19, and testing was then disabled. No notification or cleanup mode is enabled. Backups/restore and independent testing remain separate release work.
+
+## Hosted email test and cleanup — November 19
+
+The owner confirmed receipt of the labeled synthetic delivery-test email after privately correcting a partially copied Resend API token and setting the SMTP sender to the bare address `onboarding@resend.dev`. The preceding attempts produced safe SMTP 535 authentication and SMTP 501 sender diagnostics. No key value was read or recorded. The working transport uses `smtp.resend.com`, port 2465 with certificate-verified implicit TLS and username `resend`.
+
+After inbox confirmation, `PDW_MAINTENANCE_MODE` was returned to `check`; `PDW_EMAIL_TEST_TO` and `PDW_EMAIL_TEST_ID` were removed from Render. Deployment `dep-dbvt7auc6qcc73ahht1g` completed Live. The saved mode and absence of both test variables were inspected. A real scheduled invocation at 21:00:38 Pacific returned `status=ok`, `mode=check` from Worker revision `a3c2034b-dc7f-4214-b4ce-bf378fd2cb74`. One-attempt database markers remain intact to prevent reuse of old IDs.
+
+This verifies transport and owner-inbox delivery for the synthetic message. It does not verify queued lifecycle notices, delivery to other users, permanent identity cleanup, independent failure alerts or backups. The default Resend sender's recipient restriction still applies; arbitrary-recipient notifications remain blocked pending a suitable verified sender.
 
 ## Hosted check evidence
 
@@ -9,7 +17,7 @@ Status: check-only scheduling deployed and verified November 18, 2026. Render is
 - Actual scheduled runs on November 18 at 22:48:37 and 22:49:38 Pacific returned `event=pdw-maintenance`, `status=ok`, `mode=check`. The latter invocation reported `outcome=ok`, CPU time 1 ms and wall time 1,596 ms. This verifies the scheduled caller, signature acceptance and completed backend check; it is not evidence of mail delivery, account deletion or backup readiness.
 - Initial scheduled attempts failed before any HTTP request because Workers rejects Fetch's `redirect: 'error'` option. The deployed source now uses `manual` and rejects non-2xx responses without following redirects. Regression coverage includes both health and signed-POST redirect responses. Safe failure diagnostics expose only a fixed phase, numeric HTTP status and a fixed cause category.
 - Final verified Worker revision: `d5b030ae-58c4-4a95-aebf-ce6733704947`. Seven Node tests pass, including signing, destination restrictions, redirects, global fetch binding and sanitized failures.
-- Cold-start recovery after a true Render sleep, hosted simultaneous/busy runs, independent failure alerts, SMTP delivery and backup/restore remain unverified. Local MongoDB tests cover lease contention and replay; check-only success does not refresh the full-cleanup heartbeat.
+- Cold-start recovery after a true Render sleep, hosted simultaneous/busy runs, independent failure alerts and backup/restore remain unverified. The later synthetic owner-inbox SMTP check is recorded above. Local MongoDB tests cover lease contention and replay; check-only success does not refresh the full-cleanup heartbeat.
 
 ## What is prepared
 
@@ -72,6 +80,20 @@ Before switching to `cleanup`, verify the dedicated Auth0 deletion client's leas
 Worker errors are visible in Cloudflare logs and API failures are redacted. Independent failure alerts and an end-to-end operator response drill are not yet configured. They remain a release requirement; logs alone are not an alerting system. The existing one-minute guidance is a scheduling target, not an availability guarantee from either free provider.
 
 ## Pause, rotate and recover
+
+### Optional independent check-only scheduler alert
+
+Healthchecks.io's free Hobbyist plan supports the prepared monitor. The owner creates the account and handles its email login/terms. A check named `PDW staging scheduler - check only` uses a simple one-minute period and five-minute grace; its email integration is enabled. This is separate from the backend SMTP sender and its recipient restriction. Monitor creation alone does not establish a working alert.
+
+The Worker supports an optional encrypted secret `PDW_MONITOR_PING_URL` containing the check's UUID-form HTTPS `hc-ping.com` URL. The owner copies it privately from Healthchecks to Cloudflare; it must not be placed in source, plaintext variables, chat or shared screenshots. The ping URL permits reporting telemetry to that check, not reading application accounts or accessing the backend. `PDW_MONITOR_EXPECTED_MODE=check` is a public configuration value. No monitor call occurs when the secret is absent.
+
+Only a completed backend result with `status=ok` and the expected mode causes an empty POST to the monitor. Busy leases, disabled calls, partial/failing results and unexpected modes do not send a success signal. Redirects, non-HTTPS destinations, credentials, query strings and alternate hosts are rejected. No backend signatures, bodies, account data or provider errors are forwarded. Monitor errors are fixed messages without the secret URL. The monitor can observe request timing and network source metadata.
+
+This checks scheduler/API completion, not all readiness diagnostics, the frontend, queued-notice delivery or backups. A successful `check` response can still contain readiness warnings. Monitor labels and expected mode must be reviewed before enabling another maintenance mode; check-only success must never be represented as healthy cleanup. A monitor outage can also cause missing-heartbeat alerts.
+
+Rollout requires the Worker source to be deployed, the owner to save the private URL in an encrypted Worker secret, and real scheduled calls to produce `monitor=accepted` while Healthchecks shows Up with recent pings. Verify actual CPU remains within Workers Free limits. The alarm is incomplete until a controlled missed-heartbeat drill produces a received Down email, followed by a received recovery notice when successful checks resume. Pause only the scheduler for the drill; leave app sign-in and saved data alone. With a one-minute period and five-minute grace, the nominal alert threshold is six minutes after the last success; this is not a delivery-time guarantee. Do not shorten or disable protections to force a result.
+
+Current state: local monitor code/tests prepared and a check created November 19. Private URL binding, real heartbeat acceptance and inbox alert/recovery drill are pending.
 
 Set `PDW_SCHEDULE_ENABLED=0` to pause calls and `PDW_MAINTENANCE_ENABLED=0` to reject them at Render. A request already in progress may finish its current item; do not manually remove an active lease. Let its owner release it or its 180-second deadline expire. The owner can rotate the shared secret privately in both services while the scheduler is paused, then resume check mode before real processing. Replays are not retried with the same signature; each scheduled invocation generates a new timestamp and nonce. A restored database must invalidate app sessions/login flows, preserve/apply the current deletion ledger and clear stale scheduler control records before reopening; the isolated restore procedure is still pending.
 

@@ -1,5 +1,5 @@
 /** Cron-only caller: no database/provider credentials and no public run endpoint. */
-export async function triggerMaintenance(env,{fetchImpl=(...args)=>globalThis.fetch(...args),clock=()=>Date.now(),nonce=()=>crypto.randomUUID().replaceAll('-','')}={}) {
+export async function triggerMaintenance(env,{fetchImpl=(url,options)=>globalThis.fetch(url,options),clock=()=>Date.now(),nonce=()=>crypto.randomUUID().replaceAll('-','')}={}) {
   if(env.PDW_SCHEDULE_ENABLED!=='1')return {status:'disabled'}
   let origin
   try {
@@ -40,10 +40,32 @@ export async function triggerMaintenance(env,{fetchImpl=(...args)=>globalThis.fe
   }
 }
 
+/** Independent liveness signal; never forward API responses or credentials. */
+export async function reportHeartbeat(env,result,{fetchImpl=(url,options)=>globalThis.fetch(url,options)}={}) {
+  if(!env.PDW_MONITOR_PING_URL)return {monitor:'disabled'}
+  let destination
+  const expected=env.PDW_MONITOR_EXPECTED_MODE||'check'
+  try {
+    destination=new URL(env.PDW_MONITOR_PING_URL)
+    if(destination.protocol!=='https:'||destination.hostname!=='hc-ping.com'||destination.port||
+        destination.username||destination.password||destination.search||destination.hash||
+        !/^\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(destination.pathname)||
+        destination.href!==env.PDW_MONITOR_PING_URL||!['check','notify','cleanup'].includes(expected))throw new Error()
+  } catch {throw new Error('Invalid independent monitor configuration.')}
+  // Busy, paused, email-test and unexpected modes cannot mask a stopped job.
+  if(result.status!=='ok'||result.mode!==expected)return {monitor:'not_reported'}
+  try {
+    const response=await fetchImpl(destination.href,{method:'POST',redirect:'manual',signal:AbortSignal.timeout(10_000)})
+    if(!response.ok)throw new Error()
+  } catch {throw new Error('Independent maintenance heartbeat was not accepted.')}
+  return {monitor:'accepted'}
+}
+
 export default {
   async scheduled(_controller,env,context) {
-    context.waitUntil(triggerMaintenance(env).then(result=>{
-      console.log(JSON.stringify({event:'pdw-maintenance',...result}))
+    context.waitUntil(triggerMaintenance(env).then(async result=>{
+      const monitor=await reportHeartbeat(env,result)
+      console.log(JSON.stringify({event:'pdw-maintenance',...result,...monitor}))
     }))
   },
   fetch() {return new Response('Not found',{status:404})},
