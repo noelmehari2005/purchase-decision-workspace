@@ -49,6 +49,8 @@ from .lifecycle_api import router as lifecycle_router
 app.include_router(lifecycle_router)
 from .maintenance_api import router as maintenance_router
 app.include_router(maintenance_router)
+from .backup_api import router as backup_router
+app.include_router(backup_router)
 deployment=runtime()
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=[deployment.api_host] if deployment.hosted else ['localhost', '127.0.0.1', 'testserver'])
 if deployment.hosted:

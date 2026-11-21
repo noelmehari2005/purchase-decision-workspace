@@ -12,14 +12,15 @@ class LeaseLost(RuntimeError):
 
 
 class MaintenanceLease:
-    def __init__(self,database):
+    def __init__(self,database,name='maintenance'):
         self.rows=database.maintenance_locks
         self.owner=secrets.token_hex(16)
+        self.name=name
 
     def acquire(self):
         stamp=time.time()
         try:
-            row=self.rows.find_one_and_update({'_id':'maintenance','$or':[
+            row=self.rows.find_one_and_update({'_id':self.name,'$or':[
                 {'lease_until':{'$lte':stamp}},{'lease_until':{'$exists':False}}]},
                 {'$set':{'owner':self.owner,'lease_until':stamp+LEASE_SECONDS}},
                 upsert=True,return_document=ReturnDocument.AFTER)
@@ -30,11 +31,11 @@ class MaintenanceLease:
 
     def renew(self):
         stamp=time.time()
-        result=self.rows.update_one({'_id':'maintenance','owner':self.owner,'lease_until':{'$gt':stamp}},
+        result=self.rows.update_one({'_id':self.name,'owner':self.owner,'lease_until':{'$gt':stamp}},
             {'$set':{'lease_until':stamp+LEASE_SECONDS}})
         if result.matched_count!=1:
             raise LeaseLost('Maintenance lease is no longer owned.')
 
     def release(self):
-        self.rows.update_one({'_id':'maintenance','owner':self.owner},
+        self.rows.update_one({'_id':self.name,'owner':self.owner},
             {'$set':{'lease_until':0},'$unset':{'owner':''}})

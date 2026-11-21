@@ -15,3 +15,5 @@ playwright-report/
 .dev.vars
 .dev.vars.*
 .wrangler/
+*.pdwbackup
+*.pdwkey

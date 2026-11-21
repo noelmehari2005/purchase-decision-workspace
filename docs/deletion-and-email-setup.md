@@ -117,9 +117,11 @@ Database tests use fresh `pdw_test_*` databases and injected fake email/provider
 
 ## Backup retention and restoration
 
+The encrypted backup/restore work is documented in [backup-restore-setup.md](backup-restore-setup.md). On November 19, the owner ran all 13 sample backup tests successfully, including a local MongoDB restore with newer-deletion suppression and no restored sessions. On November 20, the owner also uploaded a real consistent encrypted staging snapshot to private B2 storage and verified its downloaded restore into a disposable local target, which was removed afterward. This remains a one-time owner-run workflow; actual backup expiration, recurring backup operation and independent current-control preservation are not yet verified.
+
 The agreed policy remains: 30-day account recovery, then active-data deletion, then backup-copy removal within a further 30 days after actual active-data purge. The ledger records `active_purged_at` and `backup_removal_due` once; retries do not move that deadline. If provider cleanup is unavailable, private workspace data is still removed and the remaining provider subject stays in a restricted retry record until cleanup completes.
 
-No backup service or retention settings have been selected or provisioned, and this local command cannot delete infrastructure backups. Before public release, configure and verify retention/expiration, monitor actual expiry (including failed/delayed deletion), and test restoration. Do not promise the backup deadline as operationally verified until those checks pass.
+Private B2 storage and an archive lifecycle rule have been provisioned; their details and remaining probe checks are in the backup guide. This account cleanup command cannot delete infrastructure backups. Before public release, verify actual retention/expiration and monitor delayed deletion across all versions. Do not promise the backup deadline as operationally verified until those checks pass.
 
 Minimal suppression markers retain owner hashes, workspace identifiers where needed, timestamps and deletion status; they do not contain budgets, notes, email or provider credentials. They prevent old request IDs from recreating deleted working records and help apply deletion decisions after a backup restore. Their final retention needs the chosen backup/restore design; this implementation does not expire them automatically.
 

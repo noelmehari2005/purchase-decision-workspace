@@ -21,12 +21,12 @@ PATH='/api/v1/maintenance/run'
 WINDOW_SECONDS=120
 
 
-def authorize(request):
-    if not runtime().hosted or os.environ.get('PDW_MAINTENANCE_ENABLED')!='1':
+def authorize(request,*,path=PATH,enabled_env='PDW_MAINTENANCE_ENABLED',secret_env='PDW_MAINTENANCE_SECRET',mode_env='PDW_MAINTENANCE_MODE'):
+    if not runtime().hosted or os.environ.get(enabled_env)!='1':
         raise StorageError(404,'not_found','This endpoint is unavailable.')
-    secret=os.environ.get('PDW_MAINTENANCE_SECRET','')
-    mode=os.environ.get('PDW_MAINTENANCE_MODE','check')
-    if not re.fullmatch(r'[0-9a-f]{64}',secret) or mode not in ('check','email-test','notify','cleanup'):
+    secret=os.environ.get(secret_env,'')
+    mode=os.environ.get(mode_env,'check') if mode_env else 'backup'
+    if not re.fullmatch(r'[0-9a-f]{64}',secret) or (mode_env and mode not in ('check','email-test','notify','cleanup')):
         raise StorageError(503,'maintenance_unconfigured','Maintenance configuration is incomplete.')
     stamp=request.headers.get('x-pdw-timestamp','')
     nonce=request.headers.get('x-pdw-nonce','')
@@ -35,7 +35,7 @@ def authorize(request):
             not re.fullmatch(r'[0-9]{10}',stamp) or not re.fullmatch(r'[0-9a-f]{32}',nonce) or
             not re.fullmatch(r'[0-9a-f]{64}',signature) or abs(time.time()-int(stamp))>WINDOW_SECONDS):
         raise StorageError(401,'maintenance_denied','The maintenance request was not authorized.')
-    message=f'POST\n{PATH}\n{stamp}\n{nonce}'
+    message=f'POST\n{path}\n{stamp}\n{nonce}'
     expected=hmac.new(secret.encode(),message.encode(),hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected,signature):
         raise StorageError(401,'maintenance_denied','The maintenance request was not authorized.')
